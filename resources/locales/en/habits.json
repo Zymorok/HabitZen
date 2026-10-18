@@ -23,5 +23,21 @@
   "day_complete": "All your habits are complete today!",
   "excellent": "Well done!",
   "title_required": "Enter a habit name.",
-  "days_required": "Choose at least one day."
+  "days_required": "Choose at least one day.",
+  "my_habits": "My habits",
+  "hello": "Hi, {{name}}!",
+  "stored_note": "Habits live in your account and are available on any device.",
+  "title_placeholder": "For example, read for 20 minutes",
+  "category": "Category",
+  "category_water": "Water",
+  "category_reading": "Reading",
+  "category_fitness": "Sport",
+  "category_meditation": "Meditation",
+  "category_learning": "Learning",
+  "category_custom": "Custom",
+  "weekdays_short": "Mo,Tu,We,Th,Fr,Sa,Su",
+  "every_day": "Every day",
+  "archived": "The habit was archived.",
+  "created": "Habit saved.",
+  "loading_habits": "Loading habits…"
 }

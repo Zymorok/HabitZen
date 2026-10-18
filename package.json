@@ -28,7 +28,7 @@
     "logs:demo": "node scripts/log-demo.mts",
     "start": "npm run start --workspace @habitzen/mobile --",
     "web": "npm run web --workspace @habitzen/mobile --",
-    "preview:web": "npm run preview:web --workspace @habitzen/mobile --",
+    "preview:web": "node scripts/serve-web.mjs --port 8098",
     "export:web": "npm run export:web --workspace @habitzen/mobile --"
   },
   "overrides": {

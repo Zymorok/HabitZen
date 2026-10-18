@@ -32,8 +32,9 @@ test('первый экран, безопасные кнопки и отсутс
   await page.reload();
   await expect(page.getByTestId('start-button')).toBeVisible();
   await expect(page.getByTestId('onboarding-page-0')).toContainText('Расти в своём ритме');
-  await expect(page.getByTestId('start-button')).toHaveAttribute('aria-disabled', 'true');
-  await expect(page.getByTestId('account-button')).toHaveAttribute('aria-disabled', 'true');
+  // NOTE: С HZ-03 кнопки ведут к регистрации и входу.
+  await expect(page.getByTestId('start-button')).not.toHaveAttribute('aria-disabled', 'true');
+  await expect(page.getByTestId('account-button')).not.toHaveAttribute('aria-disabled', 'true');
   await expect(page.getByTestId('page-dot-0')).toHaveAttribute('aria-selected', 'true');
   await expect
     .poll(() =>

@@ -13,6 +13,8 @@ import {
   AppPreferencesProvider,
   useAppPreferences,
 } from '../core/providers/AppPreferencesProvider';
+import { DataProvider } from '../core/providers/DataProvider';
+import { AuthProvider } from '../core/auth/AuthProvider';
 
 function Navigation() {
   const { theme } = useAppPreferences();
@@ -73,7 +75,12 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <AppPreferencesProvider>
-          <Navigation />
+          {/* NOTE: Порядок важен: вход очищает кеш данных и читает выбранный язык. */}
+          <DataProvider>
+            <AuthProvider>
+              <Navigation />
+            </AuthProvider>
+          </DataProvider>
         </AppPreferencesProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

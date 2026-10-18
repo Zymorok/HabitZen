@@ -23,5 +23,21 @@
   "day_complete": "Все привычки на сегодня выполнены!",
   "excellent": "Отлично!",
   "title_required": "Укажи название привычки.",
-  "days_required": "Выбери хотя бы один день."
+  "days_required": "Выбери хотя бы один день.",
+  "my_habits": "Мои привычки",
+  "hello": "Привет, {{name}}!",
+  "stored_note": "Привычки хранятся в аккаунте и доступны на любом устройстве.",
+  "title_placeholder": "Например, читать 20 минут",
+  "category": "Категория",
+  "category_water": "Вода",
+  "category_reading": "Чтение",
+  "category_fitness": "Спорт",
+  "category_meditation": "Медитация",
+  "category_learning": "Учёба",
+  "category_custom": "Своё",
+  "weekdays_short": "Пн,Вт,Ср,Чт,Пт,Сб,Вс",
+  "every_day": "Каждый день",
+  "archived": "Привычка убрана в архив.",
+  "created": "Привычка сохранена.",
+  "loading_habits": "Загружаем привычки…"
 }

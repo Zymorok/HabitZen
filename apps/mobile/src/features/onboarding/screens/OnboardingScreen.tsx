@@ -255,12 +255,15 @@ export function OnboardingScreen() {
           style={[styles.footer, { paddingBottom: Math.max(insets.bottom, compact ? 8 : 16) }]}
           onLayout={(event: LayoutChangeEvent) => setFooterTop(event.nativeEvent.layout.y)}
         >
-          {/* NOTE: Переход к аккаунту отключён по запросу владельца; отклик на нажатие оставлен. */}
-          <Button label={liveT('start')} disabled testID="start-button" />
+          <Button
+            label={liveT('start')}
+            onPress={() => router.push('/auth/sign-up')}
+            testID="start-button"
+          />
           <Button
             label={liveT('have_account')}
             variant="outline"
-            disabled
+            onPress={() => router.push('/auth/sign-in')}
             testID="account-button"
           />
           <View

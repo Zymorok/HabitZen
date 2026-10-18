@@ -29,14 +29,20 @@ Supabase CLI управляет томами PostgreSQL. В проекте не�
 
 Публичный клиентский ключ и URL берутся из конкретного запущенного окружения; в .env.example они не заполнены настоящими значениями. Никакой секрет не получает EXPO_PUBLIC_.
 
+Подключение приложения (HZ-03): после `npm run db:start` создать `apps/mobile/.env.local` по образцу `.env.example` — `EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:55321` и `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` из `npx supabase status -o env` (строка PUBLISHABLE_KEY). Файл не попадает в Git. После изменения файла перезапустить `npm run web`. Без файла знакомство работает, а экраны входа сообщают, что сервер не подключён.
+
+Письма локального Auth (восстановление пароля) смотреть в Mailpit: http://127.0.0.1:55324. Адреса возврата из писем перечислены в supabase/config.toml (additional_redirect_urls); после правки конфигурации — `npm run db:stop` и `npm run db:start`.
+
 На физическом телефоне 127.0.0.1 означает сам телефон. Для мобильной проверки нужен отдельно настроенный доступ только к API или тестовый облачный Supabase; открывать PostgreSQL/Studio в интернет не нужно.
 
 ## Мобильное приложение
 
-apps/mobile содержит рабочий первый запуск. Из корня: `npm run web -- --port 8097`, открыть `http://localhost:8097`. При запущенном приложении: `npm run test:e2e`. Экспорт веб-версии: `npm run export:web`.
+apps/mobile содержит первый запуск, вход и регистрацию, экран привычек. Из корня: `npm run web -- --port 8097`, открыть `http://localhost:8097`. При запущенном приложении и Supabase: `npm run test:e2e`.
+
+Итоговая веб-сборка: `npm run export:web`, затем `npm run preview:web` (http://localhost:8098). Приложение одностраничное: хостинг должен отдавать index.html на любой адрес (/habits, /auth/callback). `expo serve` этого не делает, поэтому для показа используется scripts/serve-web.mjs. Проверка сборки: `HABITZEN_BASE_URL=http://localhost:8098 npm run test:e2e`.
 
 Установлены Expo SDK 57.0.30, React Native 0.86.3, React 19.2.3, Router, NativeWind 4, Reanimated 4, Gesture Handler, i18n и AsyncStorage. Версии нативных модулей согласованы через expo install. React закреплён одинаково во всех рабочих пакетах.
 
-Совместимость: `npx expo-doctor` из apps/mobile. Android: `npm run android --workspace @habitzen/mobile -- --port 8097`, нужны SDK и JDK. Для эмулятора: `adb reverse tcp:8097 tcp:8097`. Платформенные папки генерируются из app.json. iOS требует отдельного устройства или внешней сборки; Xcode на Windows отсутствует.
+Совместимость: `npx expo-doctor` из apps/mobile. Android: `npm run android --workspace @habitzen/mobile -- --port 8097`, нужны SDK и JDK. Для эмулятора: `adb reverse tcp:8097 tcp:8097` и для локального Supabase `adb reverse tcp:55321 tcp:55321`. После добавления нативных модулей (HZ-03: expo-secure-store, expo-crypto) Android-приложение пересобирается: `npx expo prebuild --platform android --no-install`, затем из apps/mobile/android `gradlew assembleDebug -PreactNativeArchitectures=x86_64 -PreactNativeDevServerPort=8097`. Платформенные папки генерируются из app.json. iOS требует отдельного устройства или внешней сборки; Xcode на Windows отсутствует.
 
 [NativeWind](https://www.nativewind.dev/docs/getting-started/installation), [Expo monorepo](https://docs.expo.dev/guides/monorepos/), [локальный Supabase](https://supabase.com/docs/guides/local-development).

@@ -33,8 +33,8 @@ enabled = false
 
 [auth]
 enabled = true
-site_url = "http://localhost:8081"
-additional_redirect_urls = ["habitzen://auth/callback"]
+site_url = "http://localhost:8097"
+additional_redirect_urls = ["habitzen://auth/callback", "http://localhost:8097/auth/callback", "http://localhost:8098/auth/callback"]
 enable_signup = true
 
 [auth.email]

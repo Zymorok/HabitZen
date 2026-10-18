@@ -50,14 +50,23 @@ try {
     .sort();
   for (const migration of migrations)
     execute(await readFile(join(root, 'supabase/migrations', migration), 'utf8'));
-  const testSource = await readFile(join(root, 'tests/database/foundation.sql'), 'utf8');
-  const assertions = [...testSource.matchAll(/FAIL:/g)].length;
-  const result = execute(testSource);
+  // NOTE: Все файлы проверок, кроме имитации Auth, выполняются по алфавиту в одной временной базе.
+  const testFiles = (await readdir(join(root, 'tests/database')))
+    .filter((name) => name.endsWith('.sql') && name !== 'auth-fixture.sql')
+    .sort();
+  let assertions = 0;
+  let result = '';
+  for (const file of testFiles) {
+    const testSource = await readFile(join(root, 'tests/database', file), 'utf8');
+    assertions += [...testSource.matchAll(/FAIL:/g)].length;
+    result += execute(testSource);
+  }
   const report = {
     status: 'PASS',
     runId,
     image,
     migrations,
+    testFiles,
     assertions,
     scope: 'Изолированный PostgreSQL, тестовая имитация auth.uid',
     fullSupabase: 'NOT RUN',

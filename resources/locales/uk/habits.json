@@ -23,5 +23,21 @@
   "day_complete": "Усі звички на сьогодні виконано!",
   "excellent": "Чудово!",
   "title_required": "Укажи назву звички.",
-  "days_required": "Обери хоча б один день."
+  "days_required": "Обери хоча б один день.",
+  "my_habits": "Мої звички",
+  "hello": "Привіт, {{name}}!",
+  "stored_note": "Звички зберігаються в акаунті й доступні на будь-якому пристрої.",
+  "title_placeholder": "Наприклад, читати 20 хвилин",
+  "category": "Категорія",
+  "category_water": "Вода",
+  "category_reading": "Читання",
+  "category_fitness": "Спорт",
+  "category_meditation": "Медитація",
+  "category_learning": "Навчання",
+  "category_custom": "Своє",
+  "weekdays_short": "Пн,Вт,Ср,Чт,Пт,Сб,Нд",
+  "every_day": "Щодня",
+  "archived": "Звичку прибрано в архів.",
+  "created": "Звичку збережено.",
+  "loading_habits": "Завантажуємо звички…"
 }

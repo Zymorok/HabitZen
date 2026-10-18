@@ -16,7 +16,12 @@ export type IconName =
   | 'arrow'
   | 'flame'
   | 'pause'
-  | 'walk';
+  | 'walk'
+  | 'eye'
+  | 'eyeOff'
+  | 'logout'
+  | 'plus'
+  | 'archive';
 export function Icon({
   name,
   size = 22,
@@ -89,6 +94,28 @@ export function Icon({
         <Path d="M12 22c4 0 7-3 7-7 0-5-4-7-5-11-2 2-3 4-3 6-1-1-2-2-2-4-2 2-4 5-4 9 0 4 3 7 7 7Z" />
       ) : null}
       {name === 'pause' ? <Path d="M9 6v12M15 6v12" /> : null}
+      {name === 'eye' ? (
+        <>
+          <Path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+          <Circle cx="12" cy="12" r="3" />
+        </>
+      ) : null}
+      {name === 'eyeOff' ? (
+        <>
+          <Path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.2M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7c1.8 0 3.3-.5 4.6-1.2" />
+          <Path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+        </>
+      ) : null}
+      {name === 'logout' ? (
+        <Path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11" />
+      ) : null}
+      {name === 'plus' ? <Path d="M12 5v14M5 12h14" /> : null}
+      {name === 'archive' ? (
+        <>
+          <Rect x="3" y="4" width="18" height="5" rx="1.5" />
+          <Path d="M5 9v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9M10 13h4" />
+        </>
+      ) : null}
       {name === 'walk' ? (
         <>
           <Circle cx="13" cy="4" r="2" />
