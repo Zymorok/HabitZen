@@ -22,7 +22,7 @@ export function SignInScreen() {
   const [error, setError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
 
-  if (status === 'signedIn') return <Redirect href="/habits" />;
+  if (status === 'signedIn') return <Redirect href="/today" />;
 
   const submit = async () => {
     if (busy) return;
@@ -33,7 +33,7 @@ export function SignInScreen() {
     setError(null);
     try {
       await signIn(email, password);
-      resetTo(router, '/habits');
+      resetTo(router, '/today');
     } catch (failure) {
       setError(
         t(status === 'unconfigured' ? 'auth:error_not_configured' : errorMessageKey(failure)),

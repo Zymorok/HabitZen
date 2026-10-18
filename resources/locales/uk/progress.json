@@ -15,5 +15,7 @@
   "streak_days_one": "{{count}} день поспіль",
   "streak_days_few": "{{count}} дні поспіль",
   "streak_days_many": "{{count}} днів поспіль",
-  "streak_days_other": "{{count}} дня поспіль"
+  "streak_days_other": "{{count}} дня поспіль",
+  "soon_title": "Календар і серії скоро",
+  "soon_body": "Тут з’являться календар виконаних днів, статистика й дерево за рівнями."
 }

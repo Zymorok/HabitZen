@@ -5,7 +5,7 @@ import type { ImperativeRouter } from 'expo-router';
  * NOTE: После входа «назад» не должен вести на форму пароля, а после выхода —
  * на чужие привычки. Поэтому стек сбрасывается, а не дополняется.
  */
-export function resetTo(router: ImperativeRouter, path: '/' | '/habits'): void {
+export function resetTo(router: ImperativeRouter, path: '/' | '/today'): void {
   if (router.canDismiss()) router.dismissAll();
   router.replace(path);
 }

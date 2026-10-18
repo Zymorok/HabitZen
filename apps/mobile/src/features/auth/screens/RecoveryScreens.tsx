@@ -86,7 +86,7 @@ export function NewPasswordScreen() {
     setError(null);
     try {
       await updatePassword(password);
-      resetTo(router, '/habits');
+      resetTo(router, '/today');
     } catch (failure) {
       setError(t(errorMessageKey(failure)));
     } finally {

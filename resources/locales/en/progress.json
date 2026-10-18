@@ -13,5 +13,7 @@
   "rest": "Not scheduled",
   "streak_days": "{{count}} days in a row",
   "streak_days_one": "{{count}} day in a row",
-  "streak_days_other": "{{count}} days in a row"
+  "streak_days_other": "{{count}} days in a row",
+  "soon_title": "Calendar and streaks are coming",
+  "soon_body": "A calendar of completed days, statistics and a tree that grows by levels will appear here."
 }

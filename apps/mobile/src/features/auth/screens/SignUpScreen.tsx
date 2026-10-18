@@ -29,7 +29,7 @@ export function SignUpScreen() {
     },
   );
 
-  if (status === 'signedIn') return <Redirect href="/habits" />;
+  if (status === 'signedIn') return <Redirect href="/today" />;
 
   const submit = async () => {
     if (busy) return;
@@ -45,7 +45,7 @@ export function SignUpScreen() {
     setNotice(null);
     try {
       const signedIn = await signUp(name, email, password);
-      if (signedIn) resetTo(router, '/habits');
+      if (signedIn) resetTo(router, '/today');
       // NOTE: Если на сервере включено подтверждение почты, сессии ещё нет — просим проверить почту.
       else setNotice(t('auth:check_email'));
     } catch (failure) {

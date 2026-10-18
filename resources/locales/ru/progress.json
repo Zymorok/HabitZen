@@ -15,5 +15,7 @@
   "streak_days_one": "{{count}} день подряд",
   "streak_days_few": "{{count}} дня подряд",
   "streak_days_many": "{{count}} дней подряд",
-  "streak_days_other": "{{count}} дня подряд"
+  "streak_days_other": "{{count}} дня подряд",
+  "soon_title": "Календарь и серии скоро",
+  "soon_body": "Здесь появятся календарь выполненных дней, статистика и дерево по уровням."
 }

@@ -277,8 +277,11 @@ function StarGroup({
       (0.5 + 0.5 * Math.sin(time.value * speed + phase) * Math.sin(time.value * 0.31 + phase)),
   }));
   return (
-    <Animated.View pointerEvents="none" style={[styles.layer, { width: span, height }, style]}>
-      <Svg width={span} height={height}>
+    <Animated.View
+      pointerEvents="none"
+      style={[styles.layer, { width: span, height: Math.max(1, height) }, style]}
+    >
+      <Svg width={span} height={Math.max(1, height)}>
         {stars.map((star) => (
           <Circle key={`${star.x}-${star.y}`} cx={star.x} cy={star.y} r={star.r} fill="#F6F1DC" />
         ))}

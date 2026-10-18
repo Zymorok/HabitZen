@@ -1,13 +1,11 @@
 import { randomUUID } from 'expo-crypto';
 import { supabase } from '../../../core/supabase/client';
+import type { HabitCategory, HabitColor } from '../../../shared/habit-look';
 
 /**
  * Контракт привычек с сервером. Запись — только через именованные команды (RPC):
  * сервер сам проверяет владельца, версию строки и повтор запроса.
  */
-export type HabitCategory = 'water' | 'reading' | 'fitness' | 'meditation' | 'learning' | 'custom';
-export type HabitColor = 'sage' | 'mint' | 'apricot' | 'sand' | 'blue' | 'rose';
-
 export interface Habit {
   readonly id: string;
   readonly title: string;
@@ -17,24 +15,18 @@ export interface Habit {
   readonly revision: number;
   /** Биты 0–6 — понедельник…воскресенье. */
   readonly weekdayMask: number;
+  /** Время напоминания «ЧЧ:ММ»; пусто — напоминание выключено. */
   readonly reminderTimes: readonly string[];
 }
 
-export interface NewHabit {
+export interface HabitDraft {
   readonly title: string;
   readonly category: HabitCategory;
+  readonly iconKey: string;
+  readonly colorKey: HabitColor;
   readonly weekdayMask: number;
+  readonly reminderTimes: readonly string[];
 }
-
-/** Внешний вид по категории: значок и цвет подбираются автоматически. */
-export const CATEGORY_LOOK: Readonly<Record<HabitCategory, { icon: string; color: HabitColor }>> = {
-  water: { icon: 'drop', color: 'blue' },
-  reading: { icon: 'book', color: 'sage' },
-  fitness: { icon: 'walk', color: 'apricot' },
-  meditation: { icon: 'leaf', color: 'mint' },
-  learning: { icon: 'system', color: 'sand' },
-  custom: { icon: 'sun', color: 'rose' },
-};
 
 /** Номер запроса: один на действие человека, повтор после сбоя сети отправляет тот же. */
 export function newRequestId(): string {
@@ -68,20 +60,40 @@ export async function fetchActiveHabits(): Promise<Habit[]> {
     colorKey: row.color_key,
     revision: row.revision,
     weekdayMask: row.weekday_mask,
-    reminderTimes: row.reminder_times ?? [],
+    // NOTE: PostgreSQL отдаёт время как «21:00:00» — в форме нужны часы и минуты.
+    reminderTimes: (row.reminder_times ?? []).map((time) => time.slice(0, 5)),
   }));
 }
 
-export async function createHabit(habit: NewHabit, requestId: string): Promise<void> {
-  const look = CATEGORY_LOOK[habit.category];
-  const { error } = await client().rpc('create_habit', {
-    p_request_id: requestId,
+function draftParams(habit: HabitDraft) {
+  return {
     p_title: habit.title,
     p_category: habit.category,
-    p_icon_key: look.icon,
-    p_color_key: look.color,
+    p_icon_key: habit.iconKey,
+    p_color_key: habit.colorKey,
     p_weekday_mask: habit.weekdayMask,
-    p_reminder_times: [],
+    p_reminder_times: habit.reminderTimes,
+  };
+}
+
+export async function createHabit(habit: HabitDraft, requestId: string): Promise<void> {
+  const { error } = await client().rpc('create_habit', {
+    p_request_id: requestId,
+    ...draftParams(habit),
+  });
+  if (error) throw error;
+}
+
+export async function updateHabit(
+  habit: Habit,
+  draft: HabitDraft,
+  requestId: string,
+): Promise<void> {
+  const { error } = await client().rpc('update_habit', {
+    p_request_id: requestId,
+    p_habit_id: habit.id,
+    p_expected_revision: habit.revision,
+    ...draftParams(draft),
   });
   if (error) throw error;
 }

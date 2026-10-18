@@ -21,7 +21,15 @@ export type IconName =
   | 'eyeOff'
   | 'logout'
   | 'plus'
-  | 'archive';
+  | 'archive'
+  | 'home'
+  | 'timer'
+  | 'chart'
+  | 'user'
+  | 'heart'
+  | 'more'
+  | 'hand'
+  | 'clock';
 export function Icon({
   name,
   size = 22,
@@ -114,6 +122,41 @@ export function Icon({
         <>
           <Rect x="3" y="4" width="18" height="5" rx="1.5" />
           <Path d="M5 9v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9M10 13h4" />
+        </>
+      ) : null}
+      {name === 'home' ? (
+        <Path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1Z" />
+      ) : null}
+      {name === 'timer' ? (
+        <>
+          <Circle cx="12" cy="13" r="8" />
+          <Path d="M12 9v4l2.5 2M10 2h4" />
+        </>
+      ) : null}
+      {name === 'chart' ? <Path d="M5 20V11M12 20V5M19 20v-7M3 20h18" /> : null}
+      {name === 'user' ? (
+        <>
+          <Circle cx="12" cy="8" r="4" />
+          <Path d="M4 21c1-4.5 4.5-6 8-6s7 1.5 8 6" />
+        </>
+      ) : null}
+      {name === 'heart' ? (
+        <Path d="M12 20s-7.5-4.6-9.2-9.3C1.7 7.5 3.8 4.5 7 4.5c2 0 3.4 1.1 5 3 1.6-1.9 3-3 5-3 3.2 0 5.3 3 4.2 6.2C19.5 15.4 12 20 12 20Z" />
+      ) : null}
+      {name === 'more' ? (
+        <>
+          <Circle cx="12" cy="5" r="1" />
+          <Circle cx="12" cy="12" r="1" />
+          <Circle cx="12" cy="19" r="1" />
+        </>
+      ) : null}
+      {name === 'hand' ? (
+        <Path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V10m0-1.5a1.5 1.5 0 0 1 3 0V11m0-1a1.5 1.5 0 0 1 3 0v4.5c0 3.6-2.6 6.5-6.2 6.5-2.3 0-3.7-1-5-2.6L4.6 15a1.5 1.5 0 0 1 2.3-2L9 15" />
+      ) : null}
+      {name === 'clock' ? (
+        <>
+          <Circle cx="12" cy="12" r="9" />
+          <Path d="M12 7v5l3 2" />
         </>
       ) : null}
       {name === 'walk' ? (

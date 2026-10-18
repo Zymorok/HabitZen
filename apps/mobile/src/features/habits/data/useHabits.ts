@@ -1,9 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../../core/auth/AuthProvider';
 import { mobileLogger } from '../../../core/diagnostics/mobile-logger';
-import { isConflict } from '../../../core/supabase/errors';
-import { archiveHabit, createHabit, fetchActiveHabits, fetchDisplayName } from './habits-api';
-import type { Habit, NewHabit } from './habits-api';
+import {
+  archiveHabit,
+  createHabit,
+  fetchActiveHabits,
+  fetchDisplayName,
+  updateHabit,
+} from './habits-api';
+import type { Habit, HabitDraft } from './habits-api';
 
 // NOTE: Ключ кеша включает пользователя: данные двух аккаунтов не смешиваются даже до очистки.
 const habitsKey = (userId: string | undefined) => ['habits', userId] as const;
@@ -28,47 +33,55 @@ export function useDisplayName() {
   });
 }
 
-export function useCreateHabit() {
+/** Сохранение привычки: новая или изменение существующей. После успеха план дня перечитывается. */
+export function useSaveHabit() {
   const queryClient = useQueryClient();
   const { session } = useAuth();
+  const userId = session?.user.id;
   return useMutation({
-    mutationFn: ({ habit, requestId }: { habit: NewHabit; requestId: string }) =>
-      createHabit(habit, requestId),
-    onSuccess: () => {
-      void mobileLogger.emit('info', 'habits', 'habits.created');
-      return queryClient.invalidateQueries({ queryKey: habitsKey(session?.user.id) });
+    mutationFn: ({
+      draft,
+      existing,
+      requestId,
+    }: {
+      draft: HabitDraft;
+      existing?: Habit;
+      requestId: string;
+    }) => (existing ? updateHabit(existing, draft, requestId) : createHabit(draft, requestId)),
+    onSuccess: (_result, { existing }) => {
+      void mobileLogger.emit('info', 'habits', existing ? 'habits.updated' : 'habits.created');
     },
     onError: (error) => {
-      void mobileLogger.emit('warning', 'habits', 'habits.create_failed', {
+      void mobileLogger.emit('warning', 'habits', 'habits.save_failed', {
         code: (error as { code?: string }).code ?? 'unknown',
       });
     },
+    onSettled: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: habitsKey(userId) }),
+        queryClient.invalidateQueries({ queryKey: ['today-plan', userId] }),
+        queryClient.invalidateQueries({ queryKey: ['day-outcomes', userId] }),
+      ]),
   });
 }
 
 export function useArchiveHabit() {
   const queryClient = useQueryClient();
   const { session } = useAuth();
-  const key = habitsKey(session?.user.id);
+  const userId = session?.user.id;
   return useMutation({
     mutationFn: ({ habit, requestId }: { habit: Habit; requestId: string }) =>
       archiveHabit(habit, requestId),
-    // NOTE: Привычка исчезает сразу; при ошибке список возвращается как был.
-    onMutate: async ({ habit }) => {
-      await queryClient.cancelQueries({ queryKey: key });
-      const previous = queryClient.getQueryData<Habit[]>(key);
-      queryClient.setQueryData<Habit[]>(key, (list) =>
-        list?.filter((item) => item.id !== habit.id),
-      );
-      return { previous };
-    },
-    onError: (error, _variables, context) => {
-      if (context?.previous) queryClient.setQueryData(key, context.previous);
+    onError: (error) => {
       void mobileLogger.emit('warning', 'habits', 'habits.archive_failed', {
         code: (error as { code?: string }).code ?? 'unknown',
-        conflict: isConflict(error),
       });
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: key }),
+    onSettled: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: habitsKey(userId) }),
+        queryClient.invalidateQueries({ queryKey: ['today-plan', userId] }),
+        queryClient.invalidateQueries({ queryKey: ['day-outcomes', userId] }),
+      ]),
   });
 }

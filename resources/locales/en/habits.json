@@ -39,5 +39,19 @@
   "every_day": "Every day",
   "archived": "The habit was archived.",
   "created": "Habit saved.",
-  "loading_habits": "Loading habits…"
+  "loading_habits": "Loading habits…",
+  "good_morning": "Good morning!",
+  "good_afternoon": "Good afternoon!",
+  "good_evening": "Good evening!",
+  "good_night": "Good night!",
+  "free_day_title": "A free day",
+  "free_day_body": "No habits are planned for today. Rest, or add a new one.",
+  "rest_label": "Rest",
+  "hold_short": "Hold a little longer — until the circle is full",
+  "back_to_plan": "Back to the plan",
+  "menu": "Actions",
+  "save_changes": "Save",
+  "reminders_toggle": "Reminders",
+  "time_label": "Time",
+  "reminder_later": "The time is saved. Notifications will start once reminders arrive in the app."
 }

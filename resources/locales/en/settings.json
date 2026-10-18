@@ -18,5 +18,6 @@
   "language_hint": "Choose the language that feels like home.",
   "theme_hint": "Morning light or a quiet evening. Make yourself comfortable.",
   "preferences_saved_hint": "Your choice is saved on this device.",
-  "preference_save_error": "Your choice is applied but couldn't be saved. Please select it again."
+  "preference_save_error": "Your choice is applied but couldn't be saved. Please select it again.",
+  "profile_subtitle": "Caring for yourself every day"
 }
