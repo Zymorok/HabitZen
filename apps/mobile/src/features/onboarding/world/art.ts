@@ -20,8 +20,6 @@ import reeds from '../../../../assets/onboarding/reeds.webp';
 import cloud1 from '../../../../assets/onboarding/cloud_1.webp';
 import cloud2 from '../../../../assets/onboarding/cloud_2.webp';
 import cloud3 from '../../../../assets/onboarding/cloud_3.webp';
-import wolfWalk1 from '../../../../assets/onboarding/wolf_walk_1.webp';
-import wolfWalk2 from '../../../../assets/onboarding/wolf_walk_2.webp';
 import wolfSit from '../../../../assets/onboarding/wolf_sit.webp';
 import wolfHowl from '../../../../assets/onboarding/wolf_howl.webp';
 import wolfSleep from '../../../../assets/onboarding/wolf_sleep.webp';
@@ -30,6 +28,13 @@ import butterfly2 from '../../../../assets/onboarding/butterfly_2.webp';
 import leafGreen from '../../../../assets/onboarding/leaf_green.webp';
 import leafOrange from '../../../../assets/onboarding/leaf_orange.webp';
 import seed from '../../../../assets/onboarding/seed.webp';
+import wolfWalk0 from '../../../../assets/onboarding/wolf_walk_0.webp';
+import wolfWalk1 from '../../../../assets/onboarding/wolf_walk_1.webp';
+import wolfWalk2 from '../../../../assets/onboarding/wolf_walk_2.webp';
+import wolfWalk3 from '../../../../assets/onboarding/wolf_walk_3.webp';
+import wolfWalk4 from '../../../../assets/onboarding/wolf_walk_4.webp';
+import wolfWalk5 from '../../../../assets/onboarding/wolf_walk_5.webp';
+import wolfJump from '../../../../assets/onboarding/wolf_jump.webp';
 import sproutLeaves from '../../../../assets/onboarding/sprout_leaves.webp';
 import sproutMound from '../../../../assets/onboarding/sprout_mound.webp';
 import rock from '../../../../assets/onboarding/rock.webp';
@@ -56,8 +61,6 @@ export const art = {
   cloud1: { source: cloud1, width: 520, height: 208 },
   cloud2: { source: cloud2, width: 297, height: 170 },
   cloud3: { source: cloud3, width: 412, height: 255 },
-  wolfWalk1: { source: wolfWalk1, width: 353, height: 243 },
-  wolfWalk2: { source: wolfWalk2, width: 366, height: 244 },
   wolfSit: { source: wolfSit, width: 260, height: 255 },
   wolfHowl: { source: wolfHowl, width: 244, height: 258 },
   wolfSleep: { source: wolfSleep, width: 247, height: 133 },
@@ -66,6 +69,13 @@ export const art = {
   leafGreen: { source: leafGreen, width: 193, height: 134 },
   leafOrange: { source: leafOrange, width: 185, height: 158 },
   seed: { source: seed, width: 139, height: 185 },
+  wolfWalk0: { source: wolfWalk0, width: 360, height: 247 },
+  wolfWalk1: { source: wolfWalk1, width: 360, height: 247 },
+  wolfWalk2: { source: wolfWalk2, width: 360, height: 247 },
+  wolfWalk3: { source: wolfWalk3, width: 360, height: 247 },
+  wolfWalk4: { source: wolfWalk4, width: 360, height: 247 },
+  wolfWalk5: { source: wolfWalk5, width: 360, height: 247 },
+  wolfJump: { source: wolfJump, width: 389, height: 206 },
   sproutLeaves: { source: sproutLeaves, width: 983, height: 978, pivotX: 0.4832, pivotY: 0.7168 },
   sproutMound: { source: sproutMound, width: 983, height: 978 },
   rock: { source: rock, width: 1000, height: 397 },

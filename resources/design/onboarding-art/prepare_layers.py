@@ -33,7 +33,8 @@ SHEETS = ['vegetation_sheet', 'clouds_sheet', 'wolf_sheet', 'dandelion_sheet']
 SHEET_NAMES: dict[str, list[str]] = {
     'vegetation_sheet': ['grass_1', 'grass_2', 'grass_3', 'flowers_1', 'flowers_2', 'bush', 'reeds'],
     'clouds_sheet': ['cloud_1', 'cloud_2', 'cloud_3'],
-    'wolf_sheet': ['wolf_walk_1', 'wolf_walk_2', 'wolf_sit', 'wolf_howl', 'wolf_sleep'],
+    # NOTE: два старых кадра шага заменены циклом из 6 кадров (wolf_walk_sheet.png)
+    'wolf_sheet': ['', '', 'wolf_sit', 'wolf_howl', 'wolf_sleep'],
     'dandelion_sheet': ['butterfly_1', 'butterfly_2', 'leaf_green', 'leaf_orange', 'seed'],
 }
 # WARNING: Больше 1100 px по стороне для телефона не нужно: лишний вес и память.
@@ -170,6 +171,32 @@ def split_sprout(src: Image.Image) -> tuple[Image.Image, Image.Image, tuple[floa
             (base_x / src.width, base_y / src.height))
 
 
+WALK_HEIGHT = 243  # NOTE: высота шагающего волка из первого листа поз — масштаб всех поз
+
+
+def export_walk(save) -> None:
+    """Цикл шага: 6 кадров на общем холсте, выровненных по носу и лапам — волк не дёргается."""
+    sheet = load_rgba(RAW / 'wolf_walk_sheet.png')
+    # WARNING: промежутки между волками всего ~20 px, поэтому расширение маски меньше обычного
+    boxes = components(sheet, cell=4, grow=2)
+    if len(boxes) != 6:
+        sys.exit(f'wolf_walk_sheet: найдено {len(boxes)} кадров вместо 6')
+    crops = [trim(sheet.crop(box), pad=0) for box in boxes]
+    factor = WALK_HEIGHT / (sum(c.height for c in crops) / len(crops))
+    crops = [c.resize((round(c.width * factor), round(c.height * factor)), Image.LANCZOS) for c in crops]
+    width = max(c.width for c in crops)
+    height = max(c.height for c in crops)
+    for index, crop in enumerate(crops):
+        frame = Image.new('RGBA', (width, height), (0, 0, 0, 0))
+        # NOTE: нос — у левого края, лапы — у нижнего: так меняются только ноги и хвост
+        frame.alpha_composite(crop, (0, height - crop.height))
+        save(f'wolf_walk_{index}', frame, 'sprite')
+    jump = trim(load_rgba(RAW / 'wolf_jump.png'))
+    # NOTE: в прыжке волк вытянут: длина тела чуть больше, чем при шаге
+    jump_factor = (width * 1.08) / jump.width
+    save('wolf_jump', jump.resize((round(jump.width * jump_factor), round(jump.height * jump_factor)), Image.LANCZOS), 'sprite')
+
+
 def camel(name: str) -> str:
     head, *rest = name.split('_')
     return head + ''.join(part.capitalize() for part in rest)
@@ -206,6 +233,8 @@ def export() -> None:
             if name:
                 size = (max(1, round(crop.width * factor)), max(1, round(crop.height * factor)))
                 save(name, crop.resize(size, Image.LANCZOS), 'sprite')
+
+    export_walk(save)
 
     sprout = trim(load_rgba(APPROVED / 'Росток' / 'сырые' / '1_Front.png'))
     leaves, mound, pivot = split_sprout(sprout)

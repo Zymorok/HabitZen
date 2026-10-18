@@ -39,11 +39,22 @@ export function wolfStage(width: number, groundY: number) {
   };
 }
 
-// NOTE: Коды поз для расчётов на UI-потоке: 0 идёт, 1 сидит, 2 воет, 3 спит.
+// NOTE: Коды поз для расчётов на UI-потоке: 0 идёт, 1 сидит, 2 воет, 3 спит, 4 прыгает.
 const WALK = 0;
 const SIT = 1;
 const HOWL = 2;
 const SLEEP = 3;
+const JUMP = 4;
+// NOTE: Цикл шага из 6 кадров; 9 кадров в секунду — спокойный шаг, без мельтешения.
+const WALK_FRAMES = [
+  art.wolfWalk0,
+  art.wolfWalk1,
+  art.wolfWalk2,
+  art.wolfWalk3,
+  art.wolfWalk4,
+  art.wolfWalk5,
+] as const;
+const WALK_FPS = 9;
 
 interface Step {
   readonly pose: number;
@@ -63,13 +74,13 @@ interface Step {
  */
 const STORY: readonly Step[] = [
   { pose: WALK, ms: 3800, to: 'base', fade: 'in' },
-  { pose: WALK, ms: 650, to: 'top', jump: true },
+  { pose: JUMP, ms: 650, to: 'top', jump: true },
   { pose: SIT, ms: 2600 },
   { pose: HOWL, ms: 3400, howl: true },
   { pose: SIT, ms: 1700 },
   { pose: SLEEP, ms: 9500 },
   { pose: SIT, ms: 1900 },
-  { pose: WALK, ms: 650, to: 'base', jump: true, facingRight: true },
+  { pose: JUMP, ms: 650, to: 'base', jump: true, facingRight: true },
   { pose: WALK, ms: 4200, to: 'exit', fade: 'out', facingRight: true },
   { pose: SIT, ms: 7000, fade: 'out' },
 ];
@@ -160,7 +171,7 @@ export function Wolf() {
     howl,
   ]);
 
-  const scale = stage.wolfHeight / art.wolfWalk1.height;
+  const scale = stage.wolfHeight / art.wolfWalk0.height;
   const containerStyle = useAnimatedStyle(() => {
     const walking = pose.value === WALK;
     const bob = walking ? -Math.abs(Math.sin(time.value * 9)) * stage.wolfHeight * 0.03 : 0;
@@ -171,8 +182,10 @@ export function Wolf() {
   });
   return (
     <Animated.View pointerEvents="none" testID="world-wolf" style={[styles.anchor, containerStyle]}>
-      <PoseSprite image={art.wolfWalk1} scale={scale} pose={pose} code={WALK} frame={0} />
-      <PoseSprite image={art.wolfWalk2} scale={scale} pose={pose} code={WALK} frame={1} />
+      {WALK_FRAMES.map((image, frame) => (
+        <PoseSprite key={frame} image={image} scale={scale} pose={pose} code={WALK} frame={frame} />
+      ))}
+      <PoseSprite image={art.wolfJump} scale={scale} pose={pose} code={JUMP} />
       <PoseSprite image={art.wolfSit} scale={scale} pose={pose} code={SIT} />
       <PoseSprite image={art.wolfHowl} scale={scale} pose={pose} code={HOWL} />
       <PoseSprite image={art.wolfSleep} scale={scale} pose={pose} code={SLEEP} />
@@ -199,8 +212,9 @@ function PoseSprite({
   const h = image.height * scale;
   const style = useAnimatedStyle(() => {
     let shown = pose.value === code;
-    // NOTE: Два кадра шага сменяют друг друга — получается походка.
-    if (shown && frame !== undefined) shown = Math.floor(time.value * 4.2) % 2 === frame;
+    // NOTE: Шесть кадров шага сменяют друг друга по кругу — получается плавная походка.
+    if (shown && frame !== undefined)
+      shown = Math.floor(time.value * WALK_FPS) % WALK_FRAMES.length === frame;
     // NOTE: Спящий волк медленно дышит.
     const breath = code === SLEEP ? 1 + Math.sin(time.value * 1.5) * 0.025 : 1;
     return { opacity: shown ? 1 : 0, transform: [{ scaleY: breath }] };
@@ -211,7 +225,7 @@ function PoseSprite({
       style={[
         {
           position: 'absolute',
-          left: -w / 2,
+          left: frame !== undefined ? -w * 0.42 : -w / 2,
           top: -h,
           width: w,
           height: h,

@@ -17,6 +17,7 @@ import { darkTheme, lightTheme } from '@habitzen/design/tokens';
 import { motion } from '@habitzen/design/motion';
 import { useAppPreferences } from '../../core/providers/AppPreferencesProvider';
 import { useMotionPolicy } from '../motion/useMotionPolicy';
+import { textBlend } from '../motion/themeBlend';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -121,7 +122,9 @@ export function Button({
       transform: [{ scale: interpolate(ripple.value, [0, 1], [0.05, 1]) }],
     };
   });
-  const nightGradientStyle = useAnimatedStyle(() => ({ opacity: night.value }));
+  // NOTE: Заливка кнопки меняется тем же быстрым переключением, что и подпись:
+  // светлый текст никогда не оказывается на светлой заливке.
+  const nightGradientStyle = useAnimatedStyle(() => ({ opacity: textBlend(night.value) }));
   const outlineStyle = useAnimatedStyle(() => ({
     borderColor: interpolateColor(
       night.value,
@@ -134,13 +137,16 @@ export function Button({
       ['rgba(255,255,255,0)', primary ? 'rgba(255,255,255,0)' : 'rgba(169,199,163,0.12)'],
     ),
   }));
-  const labelStyle = useAnimatedStyle(() => ({
-    opacity: labelOpacity.value,
-    transform: [{ translateY: (1 - labelOpacity.value) * 4 }],
-    color: primary
-      ? interpolateColor(night.value, [0, 1], ['#FFFDF3', '#172B22'])
-      : interpolateColor(night.value, [0, 1], [lightTheme.primary, darkTheme.primary]),
-  }));
+  const labelStyle = useAnimatedStyle(() => {
+    const blend = textBlend(night.value);
+    return {
+      opacity: labelOpacity.value,
+      transform: [{ translateY: (1 - labelOpacity.value) * 4 }],
+      color: primary
+        ? interpolateColor(blend, [0, 1], ['#FFFDF3', '#172B22'])
+        : interpolateColor(blend, [0, 1], [lightTheme.primary, darkTheme.primary]),
+    };
+  });
 
   return (
     <View style={styles.wrapper}>

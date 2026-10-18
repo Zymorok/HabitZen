@@ -3,6 +3,7 @@ import type { StyleProp, TextStyle } from 'react-native';
 import type { ReactNode } from 'react';
 import { darkTheme, lightTheme } from '@habitzen/design/tokens';
 import { useAppPreferences } from '../../core/providers/AppPreferencesProvider';
+import { textBlend } from '../motion/themeBlend';
 import { typography } from './AppText';
 import type { TextVariant } from './AppText';
 
@@ -31,7 +32,7 @@ export function ThemedText({
   const light = lightTheme[tone];
   const dark = darkTheme[tone];
   const colorStyle = useAnimatedStyle(() => ({
-    color: interpolateColor(night.value, [0, 1], [light, dark]),
+    color: interpolateColor(textBlend(night.value), [0, 1], [light, dark]),
   }));
   return (
     <Animated.Text
