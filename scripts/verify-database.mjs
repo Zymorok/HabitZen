@@ -31,17 +31,29 @@ try {
   ]).trim();
   if (!/^[a-f0-9]{64}$/.test(containerId))
     throw new Error('Не удалось определить созданный контейнер.');
+  // WARNING: Образ postgres при первом запуске поднимает временный сервер для initdb, гасит его
+  // и запускает основной. pg_isready может ответить «готов» ещё временному серверу, и следующая
+  // команда попадёт в паузу между ними. Поэтому сначала ждём строку о завершении инициализации.
   let ready = false;
-  for (let attempt = 0; attempt < 80; attempt += 1) {
+  for (let attempt = 0; attempt < 160; attempt += 1) {
     try {
-      docker(['exec', containerId, 'pg_isready', '-U', 'postgres']);
-      ready = true;
-      break;
+      const logs = execFileSync('docker', ['logs', containerId], {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      const initialised = /PostgreSQL init process complete/.test(logs);
+      if (initialised) {
+        docker(['exec', containerId, 'pg_isready', '-U', 'postgres']);
+        docker(['exec', containerId, 'psql', '-U', 'postgres', '-c', 'select 1']);
+        ready = true;
+        break;
+      }
     } catch {
-      await new Promise((finish) => setTimeout(finish, 250));
+      /* NOTE: Сервер ещё перезапускается — пробуем снова. */
     }
+    await new Promise((finish) => setTimeout(finish, 250));
   }
-  if (!ready) throw new Error('Временный PostgreSQL не стал готов за 20 секунд.');
+  if (!ready) throw new Error('Временный PostgreSQL не стал готов за 40 секунд.');
   const execute = (source) =>
     docker(['exec', '-i', containerId, 'psql', '-U', 'postgres', '-v', 'ON_ERROR_STOP=1'], source);
   execute(await readFile(join(root, 'tests/database/auth-fixture.sql'), 'utf8'));
