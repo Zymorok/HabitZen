@@ -33,7 +33,7 @@ import { IconButton } from '../../../shared/ui/IconButton';
 import { ThemedText } from '../../../shared/ui/ThemedText';
 import { newRequestId } from '../../habits/data/habits-api';
 import { usePlanCommand, useTodayPlan } from '../data/usePlan';
-import { RowMenu } from '../components/RowMenu';
+import { RowMenu } from '../../../shared/ui/RowMenu';
 
 import leafGreen from '../../../../assets/onboarding/leaf_green.webp';
 import leafOrange from '../../../../assets/onboarding/leaf_orange.webp';
@@ -53,7 +53,7 @@ export function HoldScreen() {
   const { itemId } = useLocalSearchParams<{ itemId: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { t } = useTranslation(['habits', 'errors', 'common']);
+  const { t } = useTranslation(['habits', 'errors', 'common', 'progress']);
   const { theme, night } = useAppPreferences();
   const { reducedMotion } = useMotionPolicy();
   const plan = useTodayPlan();
@@ -295,13 +295,23 @@ export function HoldScreen() {
         title={item.title}
         visible={menu}
         onClose={() => setMenu(false)}
-        actions={
-          item.status === 'pending'
+        actions={[
+          {
+            key: 'stats',
+            label: t('progress:habit_stats'),
+            icon: 'chart',
+            onPress: () =>
+              router.push({
+                pathname: '/habit/stats/[habitId]',
+                params: { habitId: item.habitId },
+              }),
+          },
+          ...(item.status === 'pending'
             ? [
                 {
                   key: 'skip',
                   label: t('habits:skipped'),
-                  icon: 'moon',
+                  icon: 'moon' as const,
                   onPress: () =>
                     command.mutate(
                       { command: 'skip', item, requestId: newRequestId() },
@@ -312,8 +322,8 @@ export function HoldScreen() {
                     ),
                 },
               ]
-            : []
-        }
+            : []),
+        ]}
       />
     </Animated.View>
   );

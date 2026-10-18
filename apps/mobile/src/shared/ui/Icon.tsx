@@ -29,22 +29,34 @@ export type IconName =
   | 'heart'
   | 'more'
   | 'hand'
-  | 'clock';
+  | 'clock'
+  | 'play'
+  | 'reset'
+  | 'menu'
+  | 'sound'
+  | 'soundOff'
+  | 'sprout'
+  | 'crown'
+  | 'pencil'
+  | 'calendar';
 export function Icon({
   name,
   size = 22,
   color = '#2D6249',
   strokeWidth = 1.7,
+  fill = 'none',
 }: {
   readonly name: IconName;
   readonly size?: number;
   readonly color?: string;
   readonly strokeWidth?: number;
+  /** Заливка для «полных» значков (росток и лист на таймере); по умолчанию — только контур. */
+  readonly fill?: string;
 }) {
   const common = {
     stroke: color,
     strokeWidth,
-    fill: 'none',
+    fill,
     strokeLinecap: 'round' as const,
     strokeLinejoin: 'round' as const,
   };
@@ -163,6 +175,48 @@ export function Icon({
         <>
           <Circle cx="13" cy="4" r="2" />
           <Path d="m9 21 2-6 3 2v4M8 11l3-3 3 1 2 3M11 8l-1 7" />
+        </>
+      ) : null}
+      {name === 'play' ? <Path d="M8 5.5v13l10.5-6.5L8 5.5Z" /> : null}
+      {name === 'reset' ? (
+        <>
+          <Path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3" />
+          <Path d="M19.5 4.5v4h-4" />
+        </>
+      ) : null}
+      {name === 'menu' ? <Path d="M4 7h16M4 12h16M4 17h16" /> : null}
+      {name === 'sound' ? (
+        <>
+          <Path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" />
+          <Path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" />
+        </>
+      ) : null}
+      {name === 'soundOff' ? (
+        <>
+          <Path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" />
+          <Path d="m15.5 9.5 5 5M20.5 9.5l-5 5" />
+        </>
+      ) : null}
+      {name === 'sprout' ? (
+        <>
+          <Path d="M12 20v-8" />
+          <Path d="M12 12c0-4 2.6-6.5 7-6.5 0 4.3-2.6 6.5-7 6.5Z" />
+          <Path d="M12 14.5c0-3.3-2.2-5.5-6.5-5.5 0 3.5 2.4 5.5 6.5 5.5Z" />
+        </>
+      ) : null}
+      {name === 'crown' ? (
+        <Path d="M4 17.5h16M5 15 3.5 7.5 8.5 11 12 5l3.5 6 5-3.5L19 15H5Z" />
+      ) : null}
+      {name === 'pencil' ? (
+        <>
+          <Path d="M5 19l1-4.5L15.5 5a2.1 2.1 0 0 1 3 3L9 17.5 5 19Z" />
+          <Path d="m14 6.5 3 3" />
+        </>
+      ) : null}
+      {name === 'calendar' ? (
+        <>
+          <Rect x="4" y="5.5" width="16" height="14.5" rx="3" />
+          <Path d="M8 3.5v4M16 3.5v4M4 10h16" />
         </>
       ) : null}
     </Svg>

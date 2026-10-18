@@ -17,6 +17,18 @@
   "forest": "Forest",
   "white_noise": "White noise",
   "session_done": "Session complete",
-  "soon_title": "Focus timer is coming",
-  "soon_body": "A 25/5 timer with breaks and nature sounds will live here. It arrives in the next stage."
+  "screen_title": "Focus",
+  "more": "More",
+  "break_minutes": "5-minute break",
+  "focus_caption": "{{minutes}} min • Focus",
+  "paused_caption": "Paused",
+  "time_left": "{{time}} left",
+  "sound_title": "Focus sound",
+  "sessions_today": "Sessions done today: {{count}}",
+  "sessions_today_one": "{{count}} session done today",
+  "sessions_today_other": "{{count}} sessions done today",
+  "today_summary": "Today: {{count}} sessions · {{minutes}} min",
+  "today_summary_one": "Today: {{count}} session · {{minutes}} min",
+  "today_summary_other": "Today: {{count}} sessions · {{minutes}} min",
+  "reset_short": "Reset"
 }

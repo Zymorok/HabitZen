@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { addCalendarDays, dateInTimeZone, localDate } from '../../packages/core/src/calendar.ts';
+import {
+  addCalendarDays,
+  dateInTimeZone,
+  isoWeekday,
+  localDate,
+  monthDays,
+  shiftMonth,
+  startOfIsoWeek,
+} from '../../packages/core/src/calendar.ts';
 
 describe('Календарные даты пользователя', () => {
   it('различает день UTC и день пользователя около полуночи', () => {
@@ -26,5 +34,24 @@ describe('Календарные даты пользователя', () => {
   );
   it('отклоняет неизвестный часовой пояс', () => {
     expect(() => dateInTimeZone(new Date(), 'Wrong/Zone')).toThrow();
+  });
+});
+
+describe('Месяц и неделя для календаря (кадр 08)', () => {
+  it('неделя начинается с понедельника', () => {
+    expect(isoWeekday(localDate('2026-10-19'))).toBe(0);
+    expect(isoWeekday(localDate('2026-10-25'))).toBe(6);
+    expect(startOfIsoWeek(localDate('2026-10-25'))).toBe('2026-10-19');
+    expect(startOfIsoWeek(localDate('2026-11-01'))).toBe('2026-10-26');
+  });
+  it('перелистывает месяцы через границу года', () => {
+    expect(shiftMonth(localDate('2026-12-31'), 1)).toBe('2027-01-01');
+    expect(shiftMonth(localDate('2026-01-31'), -1)).toBe('2025-12-01');
+    expect(shiftMonth(localDate('2026-03-31'), -1)).toBe('2026-02-01');
+  });
+  it('знает длину месяца, в том числе февраль високосного года', () => {
+    expect(monthDays(localDate('2026-10-17'))).toHaveLength(31);
+    expect(monthDays(localDate('2028-02-10'))).toHaveLength(29);
+    expect(monthDays(localDate('2026-02-10')).at(-1)).toBe('2026-02-28');
   });
 });

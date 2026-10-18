@@ -22,6 +22,8 @@ const types = {
   '.ttf': 'font/ttf',
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
+  // NOTE: Звуки фокуса (HZ-05): без верного типа браузер может отказаться их играть.
+  '.wav': 'audio/wav',
 };
 
 async function fileFor(urlPath) {

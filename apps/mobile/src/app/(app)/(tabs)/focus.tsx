@@ -1,1 +1,1 @@
-export { FocusSoonScreen as default } from '../../../features/focus/screens/FocusSoonScreen';
+export { FocusScreen as default } from '../../../features/focus/screens/FocusScreen';

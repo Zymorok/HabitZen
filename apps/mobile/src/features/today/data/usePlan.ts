@@ -3,6 +3,7 @@ import { localDate } from '@habitzen/core/calendar';
 import { summarizeStreaks } from '@habitzen/core/streaks';
 import { useAuth } from '../../../core/auth/AuthProvider';
 import { mobileLogger } from '../../../core/diagnostics/mobile-logger';
+import { CALENDAR_KEY, HABIT_DAYS_KEY } from '../../progress/data/useProgress';
 import { fetchDayOutcomes, openTodayPlan, runPlanCommand } from './plan-api';
 import type { PlanCommand, PlanItem } from './plan-api';
 export { planProgress } from '../progress';
@@ -26,16 +27,21 @@ export function useStreak() {
     queryFn: async () => {
       const days = await fetchDayOutcomes();
       const last = days.at(-1);
-      if (!last) return { current: 0, best: 0 };
+      if (!last) return { current: 0, best: 0, today: null };
+      // NOTE: Последний день ответа — «сегодня» в поясе профиля; календарь берёт его отсюда,
+      // а не из часов телефона.
       try {
-        return summarizeStreaks(
-          days.map((day) => ({ date: localDate(day.date), outcome: day.outcome })),
-          localDate(last.date),
-        );
+        return {
+          ...summarizeStreaks(
+            days.map((day) => ({ date: localDate(day.date), outcome: day.outcome })),
+            localDate(last.date),
+          ),
+          today: last.date,
+        };
       } catch {
         // WARNING: Неполная история не должна ломать экран: серия просто не показывается.
         void mobileLogger.emit('warning', 'progress', 'progress.streak_unavailable');
-        return { current: 0, best: 0 };
+        return { current: 0, best: 0, today: last.date };
       }
     },
   });
@@ -71,6 +77,9 @@ export function usePlanCommand() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: planKey(userId) }),
         queryClient.invalidateQueries({ queryKey: outcomesKey(userId) }),
+        // NOTE: Календарь и история привычки тоже показывают сегодняшнюю отметку.
+        queryClient.invalidateQueries({ queryKey: [CALENDAR_KEY] }),
+        queryClient.invalidateQueries({ queryKey: [HABIT_DAYS_KEY] }),
       ]);
     },
   });
@@ -84,5 +93,7 @@ export function useRefreshPlan() {
     Promise.all([
       queryClient.invalidateQueries({ queryKey: planKey(session?.user.id) }),
       queryClient.invalidateQueries({ queryKey: outcomesKey(session?.user.id) }),
+      queryClient.invalidateQueries({ queryKey: [CALENDAR_KEY] }),
+      queryClient.invalidateQueries({ queryKey: [HABIT_DAYS_KEY] }),
     ]);
 }

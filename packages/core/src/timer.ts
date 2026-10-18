@@ -51,3 +51,16 @@ export function pauseTimer(state: TimerState, nowMs: number): TimerState {
 export function finishTimer(state: TimerState): TimerState {
   return { status: 'finished', phase: state.phase };
 }
+
+/** Остаток в виде «24:38». Секунды округляются вверх: «00:00» появляется только в конце. */
+export function clockText(ms: number): string {
+  const seconds = Math.max(0, Math.ceil(ms / 1000));
+  const minutes = Math.floor(seconds / 60);
+  return `${String(minutes).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+}
+
+/** Доля оставшегося времени для кольца: 1 — только начали, 0 — время вышло. */
+export function remainingShare(state: TimerState, nowMs: number): number {
+  const total = phaseDurationMs[state.phase];
+  return Math.min(1, Math.max(0, remainingMs(state, nowMs) / total));
+}

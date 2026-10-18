@@ -9,3 +9,9 @@ declare module '*.webp' {
   const source: ImageSourcePropType;
   export default source;
 }
+
+declare module '*.wav' {
+  import type { AudioSource } from 'expo-audio';
+  const source: AudioSource;
+  export default source;
+}

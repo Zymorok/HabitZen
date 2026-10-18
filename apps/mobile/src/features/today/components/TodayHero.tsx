@@ -1,11 +1,12 @@
 import { Image, StyleSheet, useWindowDimensions, View } from 'react-native';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import Animated, {
   Easing,
   interpolate,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
+  withSequence,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
@@ -16,6 +17,7 @@ import { useAppPreferences } from '../../../core/providers/AppPreferencesProvide
 import { useMotionPolicy } from '../../../shared/motion/useMotionPolicy';
 import { Icon } from '../../../shared/ui/Icon';
 import { AppText } from '../../../shared/ui/AppText';
+import { flameColor } from '../streak-look';
 
 import hillsDay from '../../../../assets/onboarding/hills_day.webp';
 import hillsNight from '../../../../assets/onboarding/hills_night.webp';
@@ -60,6 +62,26 @@ export function TodayHero({
       { scale: interpolate(grow.value, [0, 1], [0.85, 1]) },
     ],
   }));
+  // NOTE: Серия выросла — огонёк подпрыгивает и меняет цвет (HZ-R12). При «Уменьшении
+  // движения» остаётся только смена цвета.
+  const jump = useSharedValue(0);
+  const previousStreak = useRef(streak);
+  useEffect(() => {
+    const grew = streak > previousStreak.current;
+    previousStreak.current = streak;
+    if (!grew || !animate) return;
+    jump.value = withSequence(
+      withTiming(1, { duration: 180, easing: Easing.out(Easing.quad) }),
+      withSpring(0, { damping: 7, stiffness: 180 }),
+    );
+  }, [streak, animate, jump]);
+  const flameStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: -jump.value * 12 },
+      { scale: 1 + jump.value * 0.35 },
+      { rotate: `${jump.value * -10}deg` },
+    ],
+  }));
   const nightStyle = useAnimatedStyle(() => ({ opacity: night.value }));
   const treeHeight = height * (grown ? 0.82 : 0.66);
   // WARNING: Размеры холмов в пикселях: проценты с aspectRatio в вебе дают картинку нулевой высоты.
@@ -99,7 +121,9 @@ export function TodayHero({
       </View>
       {streak > 0 ? (
         <View style={styles.streak} testID="today-streak">
-          <Icon name="flame" size={18} color="#E5793E" strokeWidth={2} />
+          <Animated.View style={flameStyle} testID="today-flame">
+            <Icon name="flame" size={18} color={flameColor(streak)} strokeWidth={2} />
+          </Animated.View>
           <AppText style={styles.streakText}>{t('streak_days', { count: streak })}</AppText>
         </View>
       ) : null}

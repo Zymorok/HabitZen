@@ -61,6 +61,8 @@ export function useSaveHabit() {
         queryClient.invalidateQueries({ queryKey: habitsKey(userId) }),
         queryClient.invalidateQueries({ queryKey: ['today-plan', userId] }),
         queryClient.invalidateQueries({ queryKey: ['day-outcomes', userId] }),
+        queryClient.invalidateQueries({ queryKey: ['calendar-days', userId] }),
+        queryClient.invalidateQueries({ queryKey: ['habit-days', userId] }),
       ]),
   });
 }
@@ -82,6 +84,8 @@ export function useArchiveHabit() {
         queryClient.invalidateQueries({ queryKey: habitsKey(userId) }),
         queryClient.invalidateQueries({ queryKey: ['today-plan', userId] }),
         queryClient.invalidateQueries({ queryKey: ['day-outcomes', userId] }),
+        queryClient.invalidateQueries({ queryKey: ['calendar-days', userId] }),
+        queryClient.invalidateQueries({ queryKey: ['habit-days', userId] }),
       ]),
   });
 }

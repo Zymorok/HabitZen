@@ -30,3 +30,29 @@ export function addCalendarDays(date: LocalDate, amount: number): LocalDate {
   value.setUTCDate(value.getUTCDate() + amount);
   return localDate(value.toISOString().slice(0, 10));
 }
+
+/** День недели по ISO: 0 — понедельник, 6 — воскресенье. */
+export function isoWeekday(date: LocalDate): number {
+  return (new Date(date + 'T00:00:00Z').getUTCDay() + 6) % 7;
+}
+
+export function startOfIsoWeek(date: LocalDate): LocalDate {
+  return addCalendarDays(date, -isoWeekday(date));
+}
+
+/** Первое число месяца, сдвинутого на amount месяцев от месяца даты. */
+export function shiftMonth(date: LocalDate, amount: number): LocalDate {
+  if (!Number.isInteger(amount)) throw new RangeError('Сдвиг месяца должен быть целым.');
+  const value = new Date(date.slice(0, 7) + '-01T00:00:00Z');
+  value.setUTCMonth(value.getUTCMonth() + amount);
+  return localDate(value.toISOString().slice(0, 10));
+}
+
+/** Все дни месяца, в котором лежит дата, по порядку. */
+export function monthDays(date: LocalDate): LocalDate[] {
+  const first = shiftMonth(date, 0);
+  const next = shiftMonth(date, 1);
+  const days: LocalDate[] = [];
+  for (let day = first; day < next; day = addCalendarDays(day, 1)) days.push(day);
+  return days;
+}

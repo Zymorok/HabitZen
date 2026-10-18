@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { greetingKey, isDaytime } from '../../apps/mobile/src/features/today/greeting';
 import { planProgress } from '../../apps/mobile/src/features/today/progress';
 import { shiftTime } from '../../apps/mobile/src/features/habits/time';
+import { flameColor } from '../../apps/mobile/src/features/today/streak-look';
 import type { PlanItem } from '../../apps/mobile/src/features/today/data/plan-api';
 
 const item = (status: PlanItem['status']): PlanItem => ({
@@ -44,5 +45,14 @@ describe('кадр 03: время напоминания', () => {
     expect(shiftTime('23:45', 30)).toBe('00:15');
     expect(shiftTime('00:10', -15)).toBe('23:55');
     expect(shiftTime('09:30', -60)).toBe('08:30');
+  });
+});
+
+describe('Огонёк серии (HZ-R12)', () => {
+  it('становится горячее с ростом серии', () => {
+    const colors = [1, 3, 7, 21].map(flameColor);
+    expect(new Set(colors).size).toBe(4);
+    expect(flameColor(2)).toBe(flameColor(1));
+    expect(flameColor(30)).toBe(flameColor(21));
   });
 });

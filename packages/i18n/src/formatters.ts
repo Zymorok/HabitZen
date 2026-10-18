@@ -22,3 +22,30 @@ export function formatPercent(value: number, locale: SupportedLocale): string {
     value,
   );
 }
+
+/** Заголовок месяца календаря: «Октябрь»; для другого года — «Октябрь 2025». */
+export function formatMonthTitle(
+  date: LocalDate,
+  locale: SupportedLocale,
+  withYear: boolean,
+): string {
+  // NOTE: Месяц без числа Intl отдаёт в именительном падеже («октябрь», а не «октября»).
+  const month = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', month: 'long' }).format(
+    new Date(date + 'T12:00:00Z'),
+  );
+  const title = month.charAt(0).toLocaleUpperCase(locale) + month.slice(1);
+  return withYear ? `${title} ${date.slice(0, 4)}` : title;
+}
+
+/** Короткие названия дней недели, начиная с понедельника: «ПН», «ВТ», … */
+export function weekdayLabels(locale: SupportedLocale): string[] {
+  const format = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', weekday: 'short' });
+  // NOTE: 5 января 2026 года — понедельник.
+  return Array.from({ length: 7 }, (_, index) =>
+    format
+      .format(new Date(Date.UTC(2026, 0, 5 + index, 12)))
+      .replace('.', '')
+      .slice(0, 3)
+      .toLocaleUpperCase(locale),
+  );
+}

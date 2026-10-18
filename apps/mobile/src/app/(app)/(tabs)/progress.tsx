@@ -1,1 +1,1 @@
-export { ProgressSoonScreen as default } from '../../../features/progress/screens/ProgressSoonScreen';
+export { CalendarScreen as default } from '../../../features/progress/screens/CalendarScreen';

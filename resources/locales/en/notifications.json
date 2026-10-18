@@ -2,5 +2,8 @@
   "habit_title": "A small step for yourself",
   "habit_body": "Time to make room for today's habits.",
   "focus_title": "Focus time is over",
-  "focus_body": "You can take a short break."
+  "focus_body": "You can take a short break.",
+  "break_title": "Break is over",
+  "break_body": "Ready to get back to it.",
+  "focus_channel": "Focus timer"
 }

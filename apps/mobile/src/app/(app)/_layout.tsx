@@ -29,6 +29,7 @@ export default function SignedInLayout() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="habit/new" options={{ animation: 'slide_from_bottom' }} />
       <Stack.Screen name="habit/[itemId]" options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen name="habit/stats/[habitId]" options={{ animation: 'slide_from_right' }} />
       <Stack.Screen name="done" options={{ animation: 'fade', gestureEnabled: false }} />
     </Stack>
   );

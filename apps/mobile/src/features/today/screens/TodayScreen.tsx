@@ -35,15 +35,15 @@ import { planProgress, usePlanCommand, useStreak, useTodayPlan } from '../data/u
 import type { PlanItem } from '../data/plan-api';
 import { greetingKey, isDaytime } from '../greeting';
 import { PlanRow } from '../components/PlanRow';
-import { RowMenu } from '../components/RowMenu';
-import type { MenuAction } from '../components/RowMenu';
+import { RowMenu } from '../../../shared/ui/RowMenu';
+import type { MenuAction } from '../../../shared/ui/RowMenu';
 import { TodayHero } from '../components/TodayHero';
 
 /** Кадр 02 «План на день»: приветствие, дерево и серия, прогресс дня, привычки на сегодня. */
 export function TodayScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { t, i18n } = useTranslation(['habits', 'errors', 'common']);
+  const { t, i18n } = useTranslation(['habits', 'errors', 'common', 'progress']);
   const { theme, night } = useAppPreferences();
   const plan = useTodayPlan();
   const streak = useStreak();
@@ -96,6 +96,13 @@ export function TodayScreen() {
         onPress: () => run('undo', item),
       });
     if (habit) {
+      list.push({
+        key: 'stats',
+        label: t('progress:habit_stats'),
+        icon: 'chart',
+        onPress: () =>
+          router.push({ pathname: '/habit/stats/[habitId]', params: { habitId: habit.id } }),
+      });
       list.push({
         key: 'edit',
         label: t('habits:edit_habit'),

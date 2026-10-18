@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { catalogs } from '../../packages/i18n/src/catalogs.ts';
-import { formatCalendarDate, formatPercent } from '../../packages/i18n/src/formatters.ts';
+import {
+  formatCalendarDate,
+  formatMonthTitle,
+  formatPercent,
+  weekdayLabels,
+} from '../../packages/i18n/src/formatters.ts';
 import {
   parseLanguagePreference,
   resolveLocale,
@@ -70,5 +75,18 @@ describe('Языки и полнота словарей', () => {
     expect(formatCalendarDate(localDate('2026-10-17'), 'uk')).toContain('жовтня');
     expect(formatCalendarDate(localDate('2026-10-17'), 'en')).toContain('October');
     expect(formatPercent(0.8, 'en')).toBe('80%');
+  });
+});
+
+describe('Подписи календаря', () => {
+  it('называет месяц в именительном падеже с заглавной буквы', () => {
+    expect(formatMonthTitle(localDate('2026-10-17'), 'ru', false)).toBe('Октябрь');
+    expect(formatMonthTitle(localDate('2026-10-17'), 'uk', false)).toBe('Жовтень');
+    expect(formatMonthTitle(localDate('2025-12-01'), 'en', true)).toBe('December 2025');
+  });
+  it('начинает неделю с понедельника на всех языках', () => {
+    expect(weekdayLabels('ru')).toEqual(['ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС']);
+    expect(weekdayLabels('uk')[0]).toBe('ПН');
+    expect(weekdayLabels('en')[6]).toBe('SUN');
   });
 });

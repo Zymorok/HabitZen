@@ -2,20 +2,22 @@ import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, SlideInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { useAppPreferences } from '../../../core/providers/AppPreferencesProvider';
-import { AppText } from '../../../shared/ui/AppText';
-import { Icon } from '../../../shared/ui/Icon';
-import type { IconName } from '../../../shared/ui/Icon';
+import { useAppPreferences } from '../../core/providers/AppPreferencesProvider';
+import { AppText } from './AppText';
+import { Icon } from './Icon';
+import type { IconName } from './Icon';
 
 export interface MenuAction {
   readonly key: string;
   readonly label: string;
   readonly icon: IconName;
   readonly danger?: boolean;
+  /** Отмеченный пункт выбора (например, текущий звук фокуса). */
+  readonly selected?: boolean;
   readonly onPress: () => void;
 }
 
-/** Нижнее меню действий над привычкой (долгое нажатие на строку или «⋮» на кадре 04). */
+/** Нижнее меню действий: строка привычки, «⋮» на кадрах 04, 06, 09 и выбор звука фокуса. */
 export function RowMenu({
   title,
   actions,
@@ -58,6 +60,9 @@ export function RowMenu({
                 action.onPress();
               }}
               accessibilityRole="button"
+              accessibilityState={
+                action.selected === undefined ? undefined : { selected: action.selected }
+              }
               testID={`menu-${action.key}`}
               style={styles.item}
             >
@@ -66,9 +71,10 @@ export function RowMenu({
                 size={20}
                 color={action.danger ? theme.error : theme.primary}
               />
-              <AppText style={{ color: action.danger ? theme.error : theme.text }}>
+              <AppText style={{ flex: 1, color: action.danger ? theme.error : theme.text }}>
                 {action.label}
               </AppText>
+              {action.selected ? <Icon name="check" size={20} color={theme.primary} /> : null}
             </Pressable>
           ))}
         </Animated.View>

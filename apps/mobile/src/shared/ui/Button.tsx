@@ -21,6 +21,30 @@ import { textBlend } from '../motion/themeBlend';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+// NOTE: Зелёный — основной цвет приложения; персиковый — перерыв на кадре 07.
+const TONES = {
+  green: {
+    day: ['#4A8259', '#2D6249'],
+    night: ['#B2CFA3', '#87A67D'],
+    shadow: '#2D6249',
+    glow: '0 8px 18px rgba(29,70,48,0.34)',
+    outline: [lightTheme.primarySoft, darkTheme.primarySoft],
+    text: [lightTheme.primary, darkTheme.primary],
+    ripple: '#7FA978',
+    hover: 'rgba(169,199,163,0.12)',
+  },
+  peach: {
+    day: ['#F2A06F', '#E2794A'],
+    night: ['#F6C7A2', '#E9A57B'],
+    shadow: 'rgba(229,127,76,0.35)',
+    glow: '0 8px 18px rgba(196,98,48,0.28)',
+    outline: ['#F0C4A2', '#8A5A3E'],
+    text: ['#B5602F', '#F3B483'],
+    ripple: '#F3A16A',
+    hover: 'rgba(243,161,106,0.12)',
+  },
+} as const;
+
 /**
  * Кнопка с откликом: при наведении подрастает и светлеет, при нажатии вдавливается,
  * от пальца расходится мягкая волна, при отпускании пружинит обратно.
@@ -31,15 +55,18 @@ export function Button({
   label,
   onPress,
   variant = 'primary',
+  tone = 'green',
   disabled = false,
   testID,
 }: {
   readonly label: string;
   readonly onPress?: () => void;
   readonly variant?: 'primary' | 'outline' | 'quiet';
+  readonly tone?: keyof typeof TONES;
   readonly disabled?: boolean;
   readonly testID?: string;
 }) {
+  const palette = TONES[tone];
   const { night } = useAppPreferences();
   const { reducedMotion } = useMotionPolicy();
   const primary = variant === 'primary';
@@ -126,15 +153,11 @@ export function Button({
   // светлый текст никогда не оказывается на светлой заливке.
   const nightGradientStyle = useAnimatedStyle(() => ({ opacity: textBlend(night.value) }));
   const outlineStyle = useAnimatedStyle(() => ({
-    borderColor: interpolateColor(
-      night.value,
-      [0, 1],
-      [lightTheme.primarySoft, darkTheme.primarySoft],
-    ),
+    borderColor: interpolateColor(night.value, [0, 1], [...palette.outline]),
     backgroundColor: interpolateColor(
       hovered.value,
       [0, 1],
-      ['rgba(255,255,255,0)', primary ? 'rgba(255,255,255,0)' : 'rgba(169,199,163,0.12)'],
+      ['rgba(255,255,255,0)', primary ? 'rgba(255,255,255,0)' : palette.hover],
     ),
   }));
   const labelStyle = useAnimatedStyle(() => {
@@ -144,13 +167,22 @@ export function Button({
       transform: [{ translateY: (1 - labelOpacity.value) * 4 }],
       color: primary
         ? interpolateColor(blend, [0, 1], ['#FFFDF3', '#172B22'])
-        : interpolateColor(blend, [0, 1], [lightTheme.primary, darkTheme.primary]),
+        : interpolateColor(blend, [0, 1], [...palette.text]),
     };
   });
 
   return (
     <View style={styles.wrapper}>
-      {primary ? <Animated.View pointerEvents="none" style={[styles.shadow, shadowStyle]} /> : null}
+      {primary ? (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.shadow,
+            { backgroundColor: palette.shadow, boxShadow: palette.glow },
+            shadowStyle,
+          ]}
+        />
+      ) : null}
       <AnimatedPressable
         accessibilityRole="button"
         accessibilityLabel={label}
@@ -181,7 +213,7 @@ export function Button({
           <>
             <LinearGradient
               pointerEvents="none"
-              colors={['#4A8259', '#2D6249']}
+              colors={palette.day}
               start={{ x: 0.3, y: 0 }}
               end={{ x: 0.7, y: 1 }}
               style={StyleSheet.absoluteFill}
@@ -191,7 +223,7 @@ export function Button({
               style={[StyleSheet.absoluteFill, nightGradientStyle]}
             >
               <LinearGradient
-                colors={['#B2CFA3', '#87A67D']}
+                colors={palette.night}
                 start={{ x: 0.3, y: 0 }}
                 end={{ x: 0.7, y: 1 }}
                 style={StyleSheet.absoluteFill}
@@ -217,7 +249,11 @@ export function Button({
         />
         <Animated.View
           pointerEvents="none"
-          style={[styles.ripple, { backgroundColor: primary ? '#FFFFFF' : '#7FA978' }, rippleStyle]}
+          style={[
+            styles.ripple,
+            { backgroundColor: primary ? '#FFFFFF' : palette.ripple },
+            rippleStyle,
+          ]}
         />
         <Animated.Text style={[styles.label, labelStyle]} numberOfLines={1}>
           {shownLabel}
