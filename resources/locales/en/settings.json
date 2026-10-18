@@ -1,0 +1,22 @@
+{
+  "title": "Settings",
+  "language": "App language",
+  "theme": "Appearance",
+  "light": "Light theme",
+  "dark": "Dark theme",
+  "system": "Device default",
+  "reminders": "Reminders",
+  "sounds": "Sounds",
+  "haptics": "Haptics",
+  "reduced_motion": "Reduce motion",
+  "time_zone": "Time zone",
+  "language_saved": "Language updated",
+  "reminders_permission": "Allow notifications in your phone settings.",
+  "about": "About",
+  "privacy": "Personal data",
+  "system_language_hint": "Follow your device language",
+  "language_hint": "Choose the language that feels like home.",
+  "theme_hint": "Morning light or a quiet evening. Make yourself comfortable.",
+  "preferences_saved_hint": "Your choice is saved on this device.",
+  "preference_save_error": "Your choice is applied but couldn't be saved. Please select it again."
+}

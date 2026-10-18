@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "HabitZen",
+    "slug": "habitzen",
+    "version": "0.2.0",
+    "scheme": "habitzen",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.habitzen.mobile"
+    },
+    "android": {
+      "package": "app.habitzen.mobile",
+      "permissions": ["android.permission.POST_NOTIFICATIONS"]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "name": "HabitZen",
+      "shortName": "HabitZen",
+      "description": "Привычки, фокус и маленькие победы."
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-localization",
+        {
+          "supportedLocales": {
+            "ios": ["ru", "uk", "en"],
+            "android": ["ru", "uk", "en"]
+          }
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#2D6249",
+          "defaultChannel": "gentle-reminders"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

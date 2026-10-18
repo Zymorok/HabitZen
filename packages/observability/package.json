@@ -1,0 +1,10 @@
+{
+  "name": "@habitzen/observability",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./logger": "./src/logger.ts",
+    "./node-sink": "./src/node-sink.ts"
+  }
+}

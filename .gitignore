@@ -1,0 +1,27 @@
+# NOTE: Исходники и рабочие данные хранятся отдельно.
+node_modules/
+**/node_modules/
+.expo/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+*.log
+*.jsonl
+.supabase/
+supabase/.temp/
+supabase/.branches/
+storage/**
+!storage/README.md
+resources/design/private/
+.DS_Store
+Thumbs.db
+*.tsbuildinfo
+# NOTE: Нативные проекты воспроизводятся из app.json командой Expo Prebuild.
+apps/mobile/android/
+apps/mobile/ios/
+
+
+# NOTE: Expo пересоздаёт этот файл при каждом запуске dev-сервера.
+apps/mobile/expo-env.d.ts

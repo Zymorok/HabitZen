@@ -1,0 +1,14 @@
+node_modules
+package-lock.json
+storage
+supabase/.temp
+supabase/.branches
+resources/design/reference.png
+resources/assignment
+apps/mobile/android
+apps/mobile/ios
+apps/mobile/.expo
+apps/mobile/dist
+
+# NOTE: Expo пересоздаёт этот файл при каждом запуске dev-сервера.
+apps/mobile/expo-env.d.ts

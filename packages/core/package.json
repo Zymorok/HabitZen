@@ -1,0 +1,12 @@
+{
+  "name": "@habitzen/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./calendar": "./src/calendar.ts",
+    "./streaks": "./src/streaks.ts",
+    "./timer": "./src/timer.ts",
+    "./ports": "./src/ports.ts"
+  }
+}

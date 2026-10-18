@@ -1,0 +1,10 @@
+{
+  "network": "We couldn't connect. Check your connection and try again.",
+  "unknown": "We couldn't finish that. Please try again.",
+  "session": "Sign in again to continue.",
+  "conflict": "This has changed. We'll refresh it so you can try again.",
+  "invalid": "Check the fields and try again.",
+  "unavailable": "This action is unavailable right now. Please try later.",
+  "save_failed": "Couldn't save. Your check-in will stay here while we retry.",
+  "notifications": "Couldn't update reminders. Check notification permissions."
+}

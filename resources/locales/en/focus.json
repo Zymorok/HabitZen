@@ -1,0 +1,20 @@
+{
+  "title": "Time to focus",
+  "focus_period": "25 minutes of focus",
+  "break_period": "5-minute break",
+  "start": "Start focus",
+  "pause": "Pause",
+  "resume": "Resume",
+  "reset": "Reset",
+  "finish": "Finish early",
+  "rest_title": "Time for a break",
+  "start_break": "Start break",
+  "skip_break": "Skip",
+  "inhale": "Breathe in",
+  "exhale": "Breathe out",
+  "sound_none": "No sound",
+  "rain": "Rain",
+  "forest": "Forest",
+  "white_noise": "White noise",
+  "session_done": "Session complete"
+}

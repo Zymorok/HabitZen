@@ -1,0 +1,17 @@
+{
+  "title": "Your progress",
+  "calendar": "Calendar",
+  "this_week": "This week",
+  "best_streak": "Best streak",
+  "recent_days": "Recent days",
+  "tree": "Your tree",
+  "level": "Level {{level}}",
+  "growth_hint": "Every completed action helps you grow.",
+  "no_history": "Your habit history will appear here.",
+  "completed": "Completed",
+  "missed": "Missed",
+  "rest": "Not scheduled",
+  "streak_days": "{{count}} days in a row",
+  "streak_days_one": "{{count}} day in a row",
+  "streak_days_other": "{{count}} days in a row"
+}

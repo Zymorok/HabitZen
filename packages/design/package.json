@@ -1,0 +1,10 @@
+{
+  "name": "@habitzen/design",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tokens": "./src/tokens.ts",
+    "./motion": "./src/motion.ts"
+  }
+}

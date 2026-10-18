@@ -1,0 +1,14 @@
+{
+  "name": "@habitzen/i18n",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./locales": "./src/locales.ts",
+    "./translator": "./src/translator.ts",
+    "./formatters": "./src/formatters.ts"
+  },
+  "dependencies": {
+    "i18next": "26.4.7"
+  }
+}

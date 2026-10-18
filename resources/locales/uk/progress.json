@@ -1,0 +1,19 @@
+{
+  "title": "Твій прогрес",
+  "calendar": "Календар",
+  "this_week": "За цей тиждень",
+  "best_streak": "Найкраща серія",
+  "recent_days": "Останні дні",
+  "tree": "Твоє дерево",
+  "level": "Рівень {{level}}",
+  "growth_hint": "Кожна виконана справа допомагає зростати.",
+  "no_history": "Тут з’явиться історія твоїх звичок.",
+  "completed": "Виконано",
+  "missed": "Пропущено",
+  "rest": "Не заплановано",
+  "streak_days": "{{count}} днів поспіль",
+  "streak_days_one": "{{count}} день поспіль",
+  "streak_days_few": "{{count}} дні поспіль",
+  "streak_days_many": "{{count}} днів поспіль",
+  "streak_days_other": "{{count}} дня поспіль"
+}

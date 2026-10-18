@@ -1,0 +1,19 @@
+{
+  "title": "Твой прогресс",
+  "calendar": "Календарь",
+  "this_week": "За эту неделю",
+  "best_streak": "Лучшая серия",
+  "recent_days": "Последние дни",
+  "tree": "Твоё дерево",
+  "level": "Уровень {{level}}",
+  "growth_hint": "Каждое выполненное дело помогает расти.",
+  "no_history": "Здесь появится история твоих привычек.",
+  "completed": "Выполнено",
+  "missed": "Пропущено",
+  "rest": "Не запланировано",
+  "streak_days": "{{count}} дней подряд",
+  "streak_days_one": "{{count}} день подряд",
+  "streak_days_few": "{{count}} дня подряд",
+  "streak_days_many": "{{count}} дней подряд",
+  "streak_days_other": "{{count}} дня подряд"
+}
