@@ -4,6 +4,7 @@ import type { Session } from '@supabase/supabase-js';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCalendars } from 'expo-localization';
 import { supabase } from '../supabase/client';
+import { cancelAllReminders } from '../../platform/notifications/reminders';
 import { mobileLogger } from '../diagnostics/mobile-logger';
 import { useAppPreferences } from '../providers/AppPreferencesProvider';
 
@@ -112,6 +113,8 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     const client = requireClient();
+    // NOTE: Напоминания этого аккаунта не должны приходить после выхода.
+    await cancelAllReminders();
     // NOTE: Выход только на этом устройстве; другие устройства остаются в аккаунте.
     await client.auth.signOut({ scope: 'local' });
     queryClient.clear();

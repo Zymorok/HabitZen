@@ -49,5 +49,21 @@
   "pending": "Ждёт отметки",
   "habit_missing": "Привычка не найдена — возможно, она уже в архиве.",
   "history_total": "Выполнено {{done}} из {{total}} запланированных дней",
-  "habit_stats": "Статистика привычки"
+  "habit_stats": "Статистика привычки",
+  "next_level": "До следующего уровня: {{progress}} из {{needed}}",
+  "max_level": "Дерево выросло до последнего уровня",
+  "level_up": "Новый уровень!",
+  "stage_locked": "Откроется на уровне {{level}}",
+  "tree_a11y": "Твоё дерево, уровень {{level}}",
+  "perfect_days": "Полных дней: {{count}}",
+  "perfect_days_one": "Полных дней: {{count}}",
+  "perfect_days_few": "Полных дней: {{count}}",
+  "perfect_days_many": "Полных дней: {{count}}",
+  "perfect_days_other": "Полных дней: {{count}}",
+  "celebration_title": "Все {{count}} привычек выполнены!",
+  "celebration_title_one": "Все привычки на сегодня выполнены!",
+  "celebration_title_few": "Все {{count}} привычки выполнены!",
+  "celebration_title_many": "Все {{count}} привычек выполнены!",
+  "celebration_title_other": "Все {{count}} привычки выполнены!",
+  "celebration_ok": "Отлично"
 }

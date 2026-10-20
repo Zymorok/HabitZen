@@ -1,25 +1,14 @@
-import { execFileSync } from 'node:child_process';
 import { expect, test } from '@playwright/test';
-import { signUp, uniqueEmail } from './helpers';
+import { runAsTestAccount, signUp, uniqueEmail } from './helpers';
 
 /** HZ-05: таймер фокуса 25/5 (кадры 06–07) на настоящем локальном Supabase. */
-const DB_CONTAINER = process.env['HABITZEN_DB_CONTAINER'] ?? 'supabase_db_habitzen-local';
 
-/**
- * Сдвигает срок идущего занятия одноразового тестового аккаунта, чтобы не ждать 25 минут.
- * NOTE: Меняется только строка этого аккаунта в локальной базе разработки.
- */
+/** Сдвигает срок идущего занятия тестового аккаунта, чтобы не ждать 25 минут. */
 function finishSoon(email: string) {
-  if (!/^hz-[a-z0-9-]+@example\.com$/.test(email)) throw new Error('Только тестовые адреса');
-  execFileSync(
-    'docker',
-    ['exec', '-i', DB_CONTAINER, 'psql', '-U', 'postgres', '-v', 'ON_ERROR_STOP=1', '-tA'],
-    {
-      input: `update public.focus_sessions set deadline_at = now() + interval '2 seconds'
-              where status = 'running'
-                and owner_id = (select id from auth.users where email = '${email}');`,
-      encoding: 'utf8',
-    },
+  runAsTestAccount(
+    email,
+    (owner) => `update public.focus_sessions set deadline_at = now() + interval '2 seconds'
+                where status = 'running' and owner_id = ${owner};`,
   );
 }
 

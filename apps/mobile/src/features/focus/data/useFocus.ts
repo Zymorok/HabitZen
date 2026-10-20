@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../../core/auth/AuthProvider';
 import { mobileLogger } from '../../../core/diagnostics/mobile-logger';
-import { fetchFocus, fetchFocusSound, runFocusCommand, saveFocusSound } from './focus-api';
+import { useSaveSettings, useUserSettings } from '../../settings/data/useSettings';
+import { fetchFocus, runFocusCommand } from './focus-api';
 import type { FocusCommand, FocusSound } from './focus-api';
 
 const focusKey = (userId: string | undefined) => ['focus', userId] as const;
-const soundKey = (userId: string | undefined) => ['focus-sound', userId] as const;
 
 export function useFocusState() {
   const { session } = useAuth();
@@ -36,35 +36,28 @@ export function useFocusCommand() {
   });
 }
 
+/**
+ * Звук фокуса с учётом общего выключателя «Звуки» в настройках (кадр 12).
+ * NOTE: Если звуки выключены, фокус идёт в тишине, а кнопка показывает «Без звука».
+ */
 export function useFocusSound() {
-  const { session } = useAuth();
-  const userId = session?.user.id;
-  return useQuery({
-    queryKey: soundKey(userId),
-    queryFn: fetchFocusSound,
-    enabled: Boolean(userId),
-  });
+  const settings = useUserSettings();
+  const data: FocusSound | undefined = settings.data
+    ? settings.data.soundsEnabled
+      ? settings.data.focusSound
+      : 'none'
+    : undefined;
+  return { ...settings, data };
 }
 
-/** Выбор звука виден сразу; если сохранить не удалось — возвращается прежний. */
+/** Выбор звука в «Фокусе» означает «хочу слышать» — общий выключатель звуков включается. */
 export function useSaveFocusSound() {
-  const queryClient = useQueryClient();
-  const { session } = useAuth();
-  const userId = session?.user.id;
-  return useMutation({
-    mutationFn: (sound: FocusSound) => {
-      if (!userId) throw new Error('not_authenticated');
-      return saveFocusSound(userId, sound);
-    },
-    onMutate: async (sound) => {
-      await queryClient.cancelQueries({ queryKey: soundKey(userId) });
-      const previous = queryClient.getQueryData<FocusSound>(soundKey(userId));
-      queryClient.setQueryData(soundKey(userId), sound);
-      return { previous };
-    },
-    onError: (_error, _sound, context) => {
-      queryClient.setQueryData(soundKey(userId), context?.previous ?? 'none');
-      void mobileLogger.emit('warning', 'focus', 'focus.sound_save_failed');
-    },
-  });
+  const save = useSaveSettings();
+  return {
+    ...save,
+    mutate: (sound: FocusSound) =>
+      save.mutate(
+        sound === 'none' ? { focusSound: sound } : { focusSound: sound, soundsEnabled: true },
+      ),
+  };
 }

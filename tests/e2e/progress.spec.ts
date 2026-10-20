@@ -1,18 +1,13 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { addHabit, signUp, uniqueEmail } from './helpers';
+import { addHabit, completeHabit, signUp, uniqueEmail } from './helpers';
 
 /** HZ-05: календарь (кадр 08) и статистика привычки (кадр 09) на настоящем локальном Supabase. */
-async function complete(page: Page, title: string) {
-  await page.getByTestId('plan-row').filter({ hasText: title }).click();
-  const box = await page.getByTestId('hold-target').boundingBox();
-  if (!box) throw new Error('Кольцо удержания не найдено');
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-  await page.mouse.down();
-  await page.waitForTimeout(1500);
-  await page.mouse.up();
-  await expect(page.getByTestId('done-screen')).toBeVisible();
-  await page.getByTestId('done-continue').click();
+
+/** Отметка привычки; последняя привычка дня ведёт через награду (кадр 11) обратно на «Сегодня». */
+async function complete(page: Page, title: string, lastOfDay = false) {
+  await completeHabit(page, title);
+  if (lastOfDay) await page.getByTestId('celebration-ok').click();
   await expect(page.getByTestId('today-screen')).toBeVisible();
 }
 
@@ -31,7 +26,7 @@ test('календарь показывает сегодняшний итог, �
 
   // NOTE: Отметка на «Сегодня» сразу видна в календаре — кэш сбрасывается командой плана.
   await page.getByTestId('tab-today').click();
-  await complete(page, 'Выпить воду');
+  await complete(page, 'Выпить воду', true);
   await page.getByTestId('tab-progress').click();
   await expect(page.getByTestId('day-status')).toHaveText('2 из 2 выполнено');
 
@@ -42,7 +37,7 @@ test('календарь показывает сегодняшний итог, �
 test('статистика привычки: серия, неделя, последние дни и изменение', async ({ page }) => {
   await signUp(page, 'Статистика', uniqueEmail('habit-stats'));
   await addHabit(page, 'Медитация');
-  await complete(page, 'Медитация');
+  await complete(page, 'Медитация', true);
 
   await page.getByTestId('tab-progress').click();
   await page.getByTestId('progress-habit').filter({ hasText: 'Медитация' }).click();

@@ -53,5 +53,7 @@
   "save_changes": "Save",
   "reminders_toggle": "Reminders",
   "time_label": "Time",
-  "reminder_later": "The time is saved. Notifications will start once reminders arrive in the app."
+  "reminder_note": "We’ll remind you at {{time}} on the chosen days.",
+  "reminder_permission": "Allow notifications so the reminder can arrive.",
+  "reminder_web": "The reminder will arrive in the phone app."
 }

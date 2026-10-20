@@ -1,4 +1,4 @@
-import { Image, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Image, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useEffect, useRef } from 'react';
 import Animated, {
   Easing,
@@ -18,30 +18,34 @@ import { useMotionPolicy } from '../../../shared/motion/useMotionPolicy';
 import { Icon } from '../../../shared/ui/Icon';
 import { AppText } from '../../../shared/ui/AppText';
 import { flameColor } from '../streak-look';
+import { stageIndex } from '../../garden/stage';
+import { TREE_ASPECT, treeArt } from '../../garden/tree-art';
 
 import hillsDay from '../../../../assets/onboarding/hills_day.webp';
 import hillsNight from '../../../../assets/onboarding/hills_night.webp';
-import sapling from '../../../../assets/onboarding/sapling.webp';
-import tree from '../../../../assets/onboarding/tree.webp';
 
 /**
  * Верх кадра 02: небо, холмы, дерево на холмике и серия «N дней подряд».
- * NOTE: Дерево тихо покачивается и подрастает, когда серия становится длиннее.
- * TODO(HZ-06): Стадии дерева по уровням из выполненных дел (5 × N × (N−1)).
+ * NOTE: Дерево растёт по уровням из выполненных дел (HZ-06) и тихо покачивается.
+ * Нажатие на дерево открывает «Твоё дерево» (кадр 10).
  */
 export function TodayHero({
   streak,
+  level,
   height,
+  onTreePress,
 }: {
   readonly streak: number;
+  readonly level: number;
   readonly height: number;
+  readonly onTreePress: () => void;
 }) {
   const { t } = useTranslation('progress');
   const { isDark, night } = useAppPreferences();
   const { animate } = useMotionPolicy();
   const sway = useSharedValue(0);
   const grow = useSharedValue(0);
-  const grown = streak >= 3;
+  const stage = stageIndex(level);
 
   useEffect(() => {
     if (!animate) return;
@@ -54,7 +58,7 @@ export function TodayHero({
   useEffect(() => {
     grow.value = 0;
     grow.value = withSpring(1, { damping: 12, stiffness: 90 });
-  }, [grown, grow]);
+  }, [stage, grow]);
 
   const treeStyle = useAnimatedStyle(() => ({
     transform: [
@@ -83,7 +87,7 @@ export function TodayHero({
     ],
   }));
   const nightStyle = useAnimatedStyle(() => ({ opacity: night.value }));
-  const treeHeight = height * (grown ? 0.82 : 0.66);
+  const treeHeight = height * 0.86;
   // WARNING: Размеры холмов в пикселях: проценты с aspectRatio в вебе дают картинку нулевой высоты.
   const { width: windowWidth } = useWindowDimensions();
   const hillsWidth = Math.min(windowWidth, 480) * 1.2;
@@ -99,7 +103,13 @@ export function TodayHero({
       <Animated.View style={[StyleSheet.absoluteFill, nightStyle]} pointerEvents="none">
         <Image source={hillsNight} style={[styles.hills, hillsSize]} resizeMode="cover" />
       </Animated.View>
-      <View style={[styles.treeSpot, { height: treeHeight + 26 }]} pointerEvents="none">
+      <Pressable
+        onPress={onTreePress}
+        accessibilityRole="button"
+        accessibilityLabel={t('tree_a11y', { level })}
+        testID="today-tree"
+        style={[styles.treeSpot, { height: treeHeight + 26 }]}
+      >
         <Svg width={190} height={36} style={styles.mound}>
           <Defs>
             <RadialGradient id="todayMound" cx="50%" cy="40%" r="60%">
@@ -109,16 +119,18 @@ export function TodayHero({
           </Defs>
           <Ellipse cx={95} cy={22} rx={92} ry={14} fill="url(#todayMound)" />
         </Svg>
-        <Animated.View style={[styles.tree, { height: treeHeight, width: treeHeight }, treeStyle]}>
-          <Image source={grown ? tree : sapling} style={styles.fill} resizeMode="contain" />
+        <Animated.View
+          style={[styles.tree, { height: treeHeight, width: treeHeight * TREE_ASPECT }, treeStyle]}
+        >
+          <Image source={treeArt(level)} style={styles.fill} resizeMode="contain" />
           {/* NOTE: Ночью дерево темнеет тем же силуэтом — как предметы в мире первого запуска. */}
           <Animated.Image
-            source={grown ? tree : sapling}
+            source={treeArt(level)}
             style={[styles.fill, styles.dim, dimStyle]}
             resizeMode="contain"
           />
         </Animated.View>
-      </View>
+      </Pressable>
       {streak > 0 ? (
         <View style={styles.streak} testID="today-streak">
           <Animated.View style={flameStyle} testID="today-flame">

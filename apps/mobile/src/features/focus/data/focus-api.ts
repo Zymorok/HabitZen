@@ -7,7 +7,8 @@ import { resetTimer } from '@habitzen/core/timer';
  * сворачивание, перезапуск и второе устройство. Команды — с номером запроса и версией.
  */
 export type FocusStatus = 'running' | 'paused' | 'completed' | 'ended_early' | 'reset';
-export type FocusSound = 'none' | 'rain' | 'forest' | 'white_noise';
+import type { FocusSound } from '../../settings/data/settings-api';
+export type { FocusSound } from '../../settings/data/settings-api';
 export const FOCUS_SOUNDS: readonly FocusSound[] = ['none', 'rain', 'forest', 'white_noise'];
 
 export interface FocusSession {
@@ -112,20 +113,5 @@ export async function runFocusCommand(command: FocusCommand, requestId: string):
             p_session_id: command.session.id,
             p_expected_revision: command.session.revision,
           });
-  if (error) throw error;
-}
-
-/** Выбранный звук хранится в настройках аккаунта и одинаков на всех устройствах. */
-export async function fetchFocusSound(): Promise<FocusSound> {
-  const { data, error } = await client().from('user_settings').select('focus_sound').single();
-  if (error) throw error;
-  return (data as { focus_sound: FocusSound }).focus_sound;
-}
-
-export async function saveFocusSound(ownerId: string, sound: FocusSound): Promise<void> {
-  const { error } = await client()
-    .from('user_settings')
-    .update({ focus_sound: sound })
-    .eq('owner_id', ownerId);
   if (error) throw error;
 }

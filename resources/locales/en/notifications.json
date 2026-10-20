@@ -5,5 +5,8 @@
   "focus_body": "You can take a short break.",
   "break_title": "Break is over",
   "break_body": "Ready to get back to it.",
-  "focus_channel": "Focus timer"
+  "focus_channel": "Focus timer",
+  "evening_title": "How did today go?",
+  "evening_body": "Check off today’s habits — your tree will grow.",
+  "habit_reminder_body": "{{title}} — now is a good time."
 }

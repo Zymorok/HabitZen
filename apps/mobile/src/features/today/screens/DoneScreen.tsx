@@ -1,14 +1,11 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
-import type { ImageSourcePropType } from 'react-native';
 import Animated, {
-  Easing,
   FadeInDown,
   interpolateColor,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
-  withRepeat,
   withSequence,
   withSpring,
   withTiming,
@@ -20,19 +17,18 @@ import { darkTheme } from '@habitzen/design/tokens';
 import { motion } from '@habitzen/design/motion';
 import { useAppPreferences } from '../../../core/providers/AppPreferencesProvider';
 import { errorMessageKey } from '../../../core/supabase/errors';
-import { useMotionPolicy } from '../../../shared/motion/useMotionPolicy';
+import { LeafConfetti } from '../../../shared/motion/LeafConfetti';
 import { AppText } from '../../../shared/ui/AppText';
 import { Button } from '../../../shared/ui/Button';
 import { Icon } from '../../../shared/ui/Icon';
 import { ThemedText } from '../../../shared/ui/ThemedText';
 import { newRequestId } from '../../habits/data/habits-api';
+import { useGarden } from '../../garden/data/useGarden';
 import { planProgress, usePlanCommand, useTodayPlan } from '../data/usePlan';
 import { resetTo } from '../../../navigation/reset-to';
 
 import hillsDay from '../../../../assets/onboarding/hills_day.webp';
 import hillsNight from '../../../../assets/onboarding/hills_night.webp';
-import leafGreen from '../../../../assets/onboarding/leaf_green.webp';
-import leafOrange from '../../../../assets/onboarding/leaf_orange.webp';
 import grass from '../../../../assets/onboarding/grass_2.webp';
 
 /**
@@ -71,11 +67,17 @@ export function DoneScreen() {
   const shellStyle = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(night.value, [0, 1], ['#FCF7EA', darkTheme.background]),
   }));
+  const garden = useGarden();
   const goToday = () => resetTo(router, '/today');
+  // NOTE: Последняя привычка дня ведёт к награде (кадр 11), но только если её ещё не было сегодня.
+  const goNext = () => {
+    if (progress.allDone && garden.data && !garden.data.rewardToday) router.replace('/celebration');
+    else goToday();
+  };
 
   return (
     <Animated.View style={[styles.shell, shellStyle]} testID="done-screen">
-      <Confetti />
+      <LeafConfetti />
       <View style={[styles.top, { paddingTop: Math.max(insets.top, 24) + 30 }]}>
         <Animated.View style={[styles.checkCircle, popStyle]}>
           <Icon name="check" size={64} color="#FFFDF3" strokeWidth={2.6} />
@@ -120,7 +122,7 @@ export function DoneScreen() {
             <Animated.View style={[styles.bar, { backgroundColor: theme.success }, barStyle]} />
           </View>
         </Animated.View>
-        <Button label={t('common:continue')} onPress={goToday} testID="done-continue" />
+        <Button label={t('common:continue')} onPress={goNext} testID="done-continue" />
         {item?.status === 'completed' ? (
           <Button
             label={t('habits:undo')}
@@ -140,67 +142,6 @@ export function DoneScreen() {
           </AppText>
         ) : null}
       </View>
-    </Animated.View>
-  );
-}
-
-/** Листья падают сверху и кружатся — праздник без лишнего шума. */
-function Confetti() {
-  const { animate } = useMotionPolicy();
-  const pieces = useMemo(
-    () =>
-      Array.from({ length: 14 }, (_, index) => ({
-        left: `${((index * 37) % 92) + 4}%` as const,
-        delay: (index * 173) % 1400,
-        size: 12 + ((index * 7) % 10),
-        source: index % 3 === 0 ? leafGreen : leafOrange,
-        drift: index % 2 ? 18 : -18,
-      })),
-    [],
-  );
-  if (!animate) return null;
-  return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      {pieces.map((piece, index) => (
-        <FallingLeaf key={index} {...piece} />
-      ))}
-    </View>
-  );
-}
-
-function FallingLeaf({
-  left,
-  delay,
-  size,
-  source,
-  drift,
-}: {
-  readonly left: `${number}%`;
-  readonly delay: number;
-  readonly size: number;
-  readonly source: ImageSourcePropType;
-  readonly drift: number;
-}) {
-  const fall = useSharedValue(0);
-  useEffect(() => {
-    fall.value = withDelay(
-      delay,
-      withRepeat(withTiming(1, { duration: 4200, easing: Easing.linear }), -1, false),
-    );
-  }, [delay, fall]);
-  const style = useAnimatedStyle(() => ({
-    opacity: fall.value < 0.05 ? fall.value * 20 : 1 - Math.max(0, fall.value - 0.75) * 4,
-    transform: [
-      { translateY: -40 + fall.value * 520 },
-      { translateX: Math.sin(fall.value * Math.PI * 4) * drift },
-      { rotate: `${fall.value * 540}deg` },
-    ],
-  }));
-  return (
-    <Animated.View
-      style={[{ position: 'absolute', left, top: 0, width: size, height: size }, style]}
-    >
-      <Image source={source} style={{ width: '100%', height: '100%' }} resizeMode="contain" />
     </Animated.View>
   );
 }

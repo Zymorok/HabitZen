@@ -41,5 +41,17 @@
   "pending": "Waiting for a check",
   "habit_missing": "Habit not found — it may already be archived.",
   "history_total": "Done on {{done}} of {{total}} planned days",
-  "habit_stats": "Habit statistics"
+  "habit_stats": "Habit statistics",
+  "next_level": "To the next level: {{progress}} of {{needed}}",
+  "max_level": "Your tree has reached the top level",
+  "level_up": "New level!",
+  "stage_locked": "Unlocks at level {{level}}",
+  "tree_a11y": "Your tree, level {{level}}",
+  "perfect_days": "Perfect days: {{count}}",
+  "perfect_days_one": "Perfect days: {{count}}",
+  "perfect_days_other": "Perfect days: {{count}}",
+  "celebration_title": "All {{count}} habits done!",
+  "celebration_title_one": "All of today’s habits are done!",
+  "celebration_title_other": "All {{count}} habits done!",
+  "celebration_ok": "Great"
 }

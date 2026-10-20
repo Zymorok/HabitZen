@@ -29,6 +29,8 @@ import { Icon } from '../../../shared/ui/Icon';
 import { IconButton } from '../../../shared/ui/IconButton';
 import { TextField } from '../../../shared/ui/TextField';
 import { ThemedText } from '../../../shared/ui/ThemedText';
+import { useNotificationPermission } from '../../../platform/permissions/useNotificationPermission';
+import { useSaveSettings, useUserSettings } from '../../settings/data/useSettings';
 import { newRequestId } from '../data/habits-api';
 import { useActiveHabits, useSaveHabit } from '../data/useHabits';
 import { ALL_WEEKDAYS, hasWeekday, toggleWeekday } from '../weekdays';
@@ -55,6 +57,9 @@ export function HabitFormScreen() {
   const [time, setTime] = useState('21:00');
   const [reminders, setReminders] = useState(false);
   const [timeOpen, setTimeOpen] = useState(false);
+  const settings = useUserSettings();
+  const saveSettings = useSaveSettings();
+  const permission = useNotificationPermission();
   const [requestId, setRequestId] = useState(newRequestId);
   const [problem, setProblem] = useState<string | null>(null);
 
@@ -296,6 +301,12 @@ export function HabitFormScreen() {
                 onValueChange={(value) => {
                   setReminders(value);
                   touch();
+                  if (!value) return;
+                  // NOTE: Напоминание у привычки включает напоминания в целом и спрашивает
+                  // разрешение телефона — иначе выбранное время ни на что бы не влияло.
+                  if (settings.data && !settings.data.remindersEnabled)
+                    saveSettings.mutate({ remindersEnabled: true });
+                  if (!permission.granted) void permission.request();
                 }}
                 trackColor={{ true: theme.primary, false: theme.border }}
                 thumbColor="#FFFFFF"
@@ -303,8 +314,16 @@ export function HabitFormScreen() {
               />
             </View>
             {reminders ? (
-              <AppText variant="small" style={{ color: theme.textMuted, paddingHorizontal: 4 }}>
-                {t('habits:reminder_later')}
+              <AppText
+                variant="small"
+                style={{ color: theme.textMuted, paddingHorizontal: 4 }}
+                testID="form-reminder-note"
+              >
+                {permission.state === 'unavailable'
+                  ? t('habits:reminder_web')
+                  : permission.granted
+                    ? t('habits:reminder_note', { time })
+                    : t('habits:reminder_permission')}
               </AppText>
             ) : null}
           </Section>

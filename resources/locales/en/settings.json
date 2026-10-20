@@ -19,5 +19,17 @@
   "theme_hint": "Morning light or a quiet evening. Make yourself comfortable.",
   "preferences_saved_hint": "Your choice is saved on this device.",
   "preference_save_error": "Your choice is applied but couldn't be saved. Please select it again.",
-  "profile_subtitle": "Caring for yourself every day"
+  "profile_subtitle": "Caring for yourself every day",
+  "off": "Off",
+  "edit_name": "Change name",
+  "name_label": "What should we call you",
+  "name_invalid": "Name must be 1 to 80 characters.",
+  "theme_preview": "Theme preview",
+  "reminders_hint": "In the evening and at each habit’s time",
+  "reminders_web": "Reminders don’t arrive in the browser — they work in the phone app.",
+  "evening_reminder": "Evening reminder",
+  "evening_hint": "Check in on how the day went",
+  "habit_reminders": "Habits with a reminder",
+  "habit_reminders_empty": "Set a reminder time on a habit’s card.",
+  "reminders_ask": "Allow notifications so reminders can arrive."
 }

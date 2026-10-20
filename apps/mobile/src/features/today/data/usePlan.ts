@@ -3,6 +3,7 @@ import { localDate } from '@habitzen/core/calendar';
 import { summarizeStreaks } from '@habitzen/core/streaks';
 import { useAuth } from '../../../core/auth/AuthProvider';
 import { mobileLogger } from '../../../core/diagnostics/mobile-logger';
+import { GARDEN_KEY } from '../../garden/data/useGarden';
 import { CALENDAR_KEY, HABIT_DAYS_KEY } from '../../progress/data/useProgress';
 import { fetchDayOutcomes, openTodayPlan, runPlanCommand } from './plan-api';
 import type { PlanCommand, PlanItem } from './plan-api';
@@ -80,6 +81,8 @@ export function usePlanCommand() {
         // NOTE: Календарь и история привычки тоже показывают сегодняшнюю отметку.
         queryClient.invalidateQueries({ queryKey: [CALENDAR_KEY] }),
         queryClient.invalidateQueries({ queryKey: [HABIT_DAYS_KEY] }),
+        // NOTE: Дерево растёт от каждой отметки и уменьшается от отмены.
+        queryClient.invalidateQueries({ queryKey: [GARDEN_KEY] }),
       ]);
     },
   });
@@ -95,5 +98,6 @@ export function useRefreshPlan() {
       queryClient.invalidateQueries({ queryKey: outcomesKey(session?.user.id) }),
       queryClient.invalidateQueries({ queryKey: [CALENDAR_KEY] }),
       queryClient.invalidateQueries({ queryKey: [HABIT_DAYS_KEY] }),
+      queryClient.invalidateQueries({ queryKey: [GARDEN_KEY] }),
     ]);
 }

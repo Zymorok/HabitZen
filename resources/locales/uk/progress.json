@@ -49,5 +49,21 @@
   "pending": "Чекає позначки",
   "habit_missing": "Звичку не знайдено — можливо, вона вже в архіві.",
   "history_total": "Виконано {{done}} з {{total}} запланованих днів",
-  "habit_stats": "Статистика звички"
+  "habit_stats": "Статистика звички",
+  "next_level": "До наступного рівня: {{progress}} з {{needed}}",
+  "max_level": "Дерево виросло до останнього рівня",
+  "level_up": "Новий рівень!",
+  "stage_locked": "Відкриється на рівні {{level}}",
+  "tree_a11y": "Твоє дерево, рівень {{level}}",
+  "perfect_days": "Повних днів: {{count}}",
+  "perfect_days_one": "Повних днів: {{count}}",
+  "perfect_days_few": "Повних днів: {{count}}",
+  "perfect_days_many": "Повних днів: {{count}}",
+  "perfect_days_other": "Повних днів: {{count}}",
+  "celebration_title": "Усі {{count}} звичок виконано!",
+  "celebration_title_one": "Усі звички на сьогодні виконано!",
+  "celebration_title_few": "Усі {{count}} звички виконано!",
+  "celebration_title_many": "Усі {{count}} звичок виконано!",
+  "celebration_title_other": "Усі {{count}} звички виконано!",
+  "celebration_ok": "Чудово"
 }

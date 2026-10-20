@@ -2,6 +2,7 @@ import { Redirect, Stack } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
 import { useAuth } from '../../core/auth/AuthProvider';
 import { useAppPreferences } from '../../core/providers/AppPreferencesProvider';
+import { ReminderSync } from '../../features/reminders/ReminderSync';
 
 // NOTE: Всё внутри (app) — только после входа. Без сессии человек возвращается к знакомству.
 export default function SignedInLayout() {
@@ -23,14 +24,19 @@ export default function SignedInLayout() {
   }
   if (status !== 'signedIn') return <Redirect href="/" />;
   return (
-    <Stack
-      screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.background } }}
-    >
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="habit/new" options={{ animation: 'slide_from_bottom' }} />
-      <Stack.Screen name="habit/[itemId]" options={{ animation: 'slide_from_right' }} />
-      <Stack.Screen name="habit/stats/[habitId]" options={{ animation: 'slide_from_right' }} />
-      <Stack.Screen name="done" options={{ animation: 'fade', gestureEnabled: false }} />
-    </Stack>
+    <>
+      <ReminderSync />
+      <Stack
+        screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.background } }}
+      >
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="habit/new" options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="habit/[itemId]" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="habit/stats/[habitId]" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="done" options={{ animation: 'fade', gestureEnabled: false }} />
+        <Stack.Screen name="celebration" options={{ animation: 'fade', gestureEnabled: false }} />
+        <Stack.Screen name="reminders" options={{ animation: 'slide_from_right' }} />
+      </Stack>
+    </>
   );
 }

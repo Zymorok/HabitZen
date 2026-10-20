@@ -30,6 +30,7 @@ import { Button } from '../../../shared/ui/Button';
 import { Icon } from '../../../shared/ui/Icon';
 import { ThemedText } from '../../../shared/ui/ThemedText';
 import { newRequestId } from '../../habits/data/habits-api';
+import { useGarden } from '../../garden/data/useGarden';
 import { useActiveHabits, useArchiveHabit } from '../../habits/data/useHabits';
 import { planProgress, usePlanCommand, useStreak, useTodayPlan } from '../data/usePlan';
 import type { PlanItem } from '../data/plan-api';
@@ -47,6 +48,7 @@ export function TodayScreen() {
   const { theme, night } = useAppPreferences();
   const plan = useTodayPlan();
   const streak = useStreak();
+  const garden = useGarden();
   const command = usePlanCommand();
   const habits = useActiveHabits();
   const archive = useArchiveHabit();
@@ -154,7 +156,12 @@ export function TodayScreen() {
             color={isDaytime(hour) ? '#E9A23B' : '#A9BDCB'}
           />
         </View>
-        <TodayHero streak={streak.data?.current ?? 0} height={168} />
+        <TodayHero
+          streak={streak.data?.current ?? 0}
+          level={garden.data?.level ?? 1}
+          height={168}
+          onTreePress={() => router.push('/garden')}
+        />
 
         <View style={styles.body}>
           {plan.isPending ? (
