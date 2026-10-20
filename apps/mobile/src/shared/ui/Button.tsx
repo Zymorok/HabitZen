@@ -12,7 +12,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { darkTheme, lightTheme } from '@habitzen/design/tokens';
+import type { Palette } from '@habitzen/design/tokens';
 import { motion } from '@habitzen/design/motion';
 import { useAppPreferences } from '../../core/providers/AppPreferencesProvider';
 import { useMotionPolicy } from '../motion/useMotionPolicy';
@@ -21,18 +21,24 @@ import { useHaptics } from '../haptics';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-// NOTE: Зелёный — основной цвет приложения; персиковый — перерыв на кадре 07.
+/**
+ * Основная кнопка в цвете выбранной темы (HZ-08): «Лес» — зелёная, как на макете.
+ * NOTE: Персиковая — перерыв на кадре 07, она от темы не зависит.
+ */
+function accentTone(palette: Palette) {
+  return {
+    day: palette.gradient.day,
+    night: palette.gradient.night,
+    shadow: palette.light.primary,
+    glow: palette.glow,
+    outline: [palette.light.primarySoft, palette.dark.primarySoft],
+    text: [palette.light.primary, palette.dark.primary],
+    ripple: palette.ripple,
+    hover: palette.hover,
+  } as const;
+}
+
 const TONES = {
-  green: {
-    day: ['#4A8259', '#2D6249'],
-    night: ['#B2CFA3', '#87A67D'],
-    shadow: '#2D6249',
-    glow: '0 8px 18px rgba(29,70,48,0.34)',
-    outline: [lightTheme.primarySoft, darkTheme.primarySoft],
-    text: [lightTheme.primary, darkTheme.primary],
-    ripple: '#7FA978',
-    hover: 'rgba(169,199,163,0.12)',
-  },
   peach: {
     day: ['#F2A06F', '#E2794A'],
     night: ['#F6C7A2', '#E9A57B'],
@@ -62,12 +68,12 @@ export function Button({
   readonly label: string;
   readonly onPress?: () => void;
   readonly variant?: 'primary' | 'outline' | 'quiet';
-  readonly tone?: keyof typeof TONES;
+  readonly tone?: 'green' | keyof typeof TONES;
   readonly disabled?: boolean;
   readonly testID?: string;
 }) {
-  const palette = TONES[tone];
-  const { night } = useAppPreferences();
+  const { night, palette: colors } = useAppPreferences();
+  const palette = tone === 'green' ? accentTone(colors) : TONES[tone];
   const { reducedMotion } = useMotionPolicy();
   const haptics = useHaptics();
   const primary = variant === 'primary';
@@ -273,8 +279,6 @@ const styles = StyleSheet.create({
     top: 4,
     bottom: 4,
     borderRadius: 28,
-    backgroundColor: '#2D6249',
-    boxShadow: '0 8px 18px rgba(29,70,48,0.34)',
   },
   button: {
     minHeight: 54,

@@ -18,7 +18,6 @@ import Animated, {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { darkTheme, lightTheme } from '@habitzen/design/tokens';
 import { useAppPreferences } from '../../../core/providers/AppPreferencesProvider';
 import { errorMessageKey } from '../../../core/supabase/errors';
 import { COLOR_ORDER, HABIT_COLORS, ICON_CHOICES } from '../../../shared/habit-look';
@@ -35,17 +34,29 @@ import { newRequestId } from '../data/habits-api';
 import { useActiveHabits, useSaveHabit } from '../data/useHabits';
 import { ALL_WEEKDAYS, hasWeekday, toggleWeekday } from '../weekdays';
 import { shiftTime } from '../time';
+import {
+  clampGoal,
+  defaultTarget,
+  GOAL_UNITS,
+  goalStep,
+  isCountGoal,
+  MAX_GOAL,
+  TIMES_OF_DAY,
+} from '../goal';
+import type { Frequency, GoalUnit, TimeOfDay } from '../goal';
+import { Chip, NumberStepper } from '../components/FormControls';
 
 /**
  * Кадр 03 «Новая привычка» (и изменение существующей по ?id=…):
- * название, значок, цвет, дни недели, время и напоминание.
+ * название, значок, цвет, цель на день, как часто, время дня, время и напоминание.
+ * NOTE: Цель, график и время дня добавлены в HZ-08 в том же стиле, что и дни недели.
  */
 export function HabitFormScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation(['habits', 'errors', 'common']);
-  const { theme, night } = useAppPreferences();
+  const { theme, night, palette } = useAppPreferences();
   const habits = useActiveHabits();
   const save = useSaveHabit();
   const existing = useMemo(() => habits.data?.find((habit) => habit.id === id), [habits.data, id]);
@@ -57,6 +68,13 @@ export function HabitFormScreen() {
   const [time, setTime] = useState('21:00');
   const [reminders, setReminders] = useState(false);
   const [timeOpen, setTimeOpen] = useState(false);
+  const [goalCount, setGoalCount] = useState(false);
+  const [goalUnit, setGoalUnit] = useState<GoalUnit>('glasses');
+  const [goalTarget, setGoalTarget] = useState(defaultTarget('glasses'));
+  const [frequency, setFrequency] = useState<Frequency>('days');
+  const [perWeek, setPerWeek] = useState(3);
+  const [intervalDays, setIntervalDays] = useState(2);
+  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('any');
   const settings = useUserSettings();
   const saveSettings = useSaveSettings();
   const permission = useNotificationPermission();
@@ -72,6 +90,15 @@ export function HabitFormScreen() {
     setMask(existing.weekdayMask);
     setReminders(existing.reminderTimes.length > 0);
     if (existing.reminderTimes[0]) setTime(existing.reminderTimes[0]);
+    setGoalCount(isCountGoal(existing.goalTarget, existing.goalUnit));
+    if (isCountGoal(existing.goalTarget, existing.goalUnit)) {
+      setGoalUnit(existing.goalUnit);
+      setGoalTarget(existing.goalTarget);
+    }
+    setFrequency(existing.frequency);
+    if (existing.perWeek) setPerWeek(existing.perWeek);
+    if (existing.intervalDays) setIntervalDays(existing.intervalDays);
+    setTimeOfDay(existing.timeOfDay);
   }, [existing]);
 
   // NOTE: Любая правка — уже другое действие, ему нужен новый номер запроса.
@@ -81,14 +108,14 @@ export function HabitFormScreen() {
     backgroundColor: interpolateColor(
       night.value,
       [0, 1],
-      [lightTheme.background, darkTheme.background],
+      [palette.light.background, palette.dark.background],
     ),
   }));
 
   const submit = () => {
     if (save.isPending) return;
     if (!title.trim()) return setProblem(t('habits:title_required'));
-    if (!mask) return setProblem(t('habits:days_required'));
+    if (frequency === 'days' && !mask) return setProblem(t('habits:days_required'));
     setProblem(null);
     save.mutate(
       {
@@ -97,8 +124,14 @@ export function HabitFormScreen() {
           category: icon.category,
           iconKey: icon.icon,
           colorKey: color,
-          weekdayMask: mask,
+          weekdayMask: frequency === 'days' ? mask : ALL_WEEKDAYS,
           reminderTimes: reminders ? [time] : [],
+          goalTarget: goalCount ? goalTarget : 1,
+          goalUnit: goalCount ? goalUnit : 'times',
+          timeOfDay,
+          frequency,
+          perWeek: frequency === 'weekly' ? perWeek : null,
+          intervalDays: frequency === 'interval' ? intervalDays : null,
         },
         ...(existing ? { existing } : {}),
         requestId,
@@ -209,40 +242,163 @@ export function HabitFormScreen() {
             </View>
           </Section>
 
-          <Section label={t('habits:weekdays')}>
-            <View style={styles.days}>
-              {shortNames.map((label, day) => {
-                const on = hasWeekday(mask, day);
-                return (
-                  <Pressable
-                    key={label}
-                    onPress={() => {
-                      setMask(toggleWeekday(mask, day));
-                      touch();
-                    }}
-                    accessibilityRole="checkbox"
-                    aria-checked={on}
-                    accessibilityLabel={label}
-                    testID={`form-day-${day}`}
-                    style={[
-                      styles.day,
-                      on
-                        ? { backgroundColor: theme.primary, borderColor: theme.primary }
-                        : { borderColor: theme.border, backgroundColor: theme.surface },
-                    ]}
-                  >
-                    <AppText
-                      variant="small"
-                      style={{
-                        color: on ? theme.background : theme.textMuted,
-                        fontFamily: 'Manrope_600SemiBold',
+          <Section label={t('habits:goal')}>
+            <View style={styles.chips}>
+              <Chip
+                label={t('habits:goal_check')}
+                selected={!goalCount}
+                onPress={() => {
+                  setGoalCount(false);
+                  touch();
+                }}
+                testID="form-goal-check"
+              />
+              <Chip
+                label={t('habits:goal_count')}
+                selected={goalCount}
+                onPress={() => {
+                  setGoalCount(true);
+                  touch();
+                }}
+                testID="form-goal-count"
+              />
+            </View>
+            {goalCount ? (
+              <Animated.View entering={FadeIn.duration(200)} style={styles.section}>
+                <NumberStepper
+                  value={goalTarget}
+                  label={t(`habits:unit_word_${goalUnit}`, { count: goalTarget })}
+                  min={1}
+                  max={MAX_GOAL}
+                  step={goalStep(goalUnit)}
+                  onChange={(value) => {
+                    setGoalTarget(clampGoal(value));
+                    touch();
+                  }}
+                  testID="form-goal"
+                />
+                <View style={styles.chips}>
+                  {GOAL_UNITS.map((unit) => (
+                    <Chip
+                      key={unit}
+                      label={t(`habits:unit_name_${unit}`)}
+                      selected={unit === goalUnit}
+                      onPress={() => {
+                        setGoalUnit(unit);
+                        setGoalTarget(defaultTarget(unit));
+                        touch();
                       }}
+                      testID={`form-unit-${unit}`}
+                      // NOTE: Шесть единиц — ровная сетка 3 × 2, а не 4 + 2 разной ширины.
+                      style={styles.unitChip}
+                    />
+                  ))}
+                </View>
+              </Animated.View>
+            ) : null}
+          </Section>
+
+          <Section label={t('habits:frequency')}>
+            <View style={styles.chips}>
+              {(['days', 'weekly', 'interval'] as const).map((kind) => (
+                <Chip
+                  key={kind}
+                  label={t(`habits:freq_${kind}`)}
+                  selected={frequency === kind}
+                  onPress={() => {
+                    setFrequency(kind);
+                    touch();
+                  }}
+                  testID={`form-freq-${kind}`}
+                />
+              ))}
+            </View>
+            {frequency === 'days' ? (
+              <View style={styles.days}>
+                {shortNames.map((label, day) => {
+                  const on = hasWeekday(mask, day);
+                  return (
+                    <Pressable
+                      key={label}
+                      onPress={() => {
+                        setMask(toggleWeekday(mask, day));
+                        touch();
+                      }}
+                      accessibilityRole="checkbox"
+                      aria-checked={on}
+                      accessibilityLabel={label}
+                      testID={`form-day-${day}`}
+                      style={[
+                        styles.day,
+                        on
+                          ? { backgroundColor: theme.primary, borderColor: theme.primary }
+                          : { borderColor: theme.border, backgroundColor: theme.surface },
+                      ]}
                     >
-                      {label.toUpperCase()}
-                    </AppText>
-                  </Pressable>
-                );
-              })}
+                      <AppText
+                        variant="small"
+                        style={{
+                          color: on ? theme.background : theme.textMuted,
+                          fontFamily: 'Manrope_600SemiBold',
+                        }}
+                      >
+                        {label.toUpperCase()}
+                      </AppText>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ) : frequency === 'weekly' ? (
+              <Animated.View entering={FadeIn.duration(200)} style={styles.section}>
+                <NumberStepper
+                  value={perWeek}
+                  label={t('habits:per_week_unit', { count: perWeek })}
+                  min={1}
+                  max={6}
+                  onChange={(value) => {
+                    setPerWeek(value);
+                    touch();
+                  }}
+                  testID="form-per-week"
+                />
+                <AppText variant="small" style={[styles.hint, { color: theme.textMuted }]}>
+                  {t('habits:per_week_hint')}
+                </AppText>
+              </Animated.View>
+            ) : (
+              <Animated.View entering={FadeIn.duration(200)} style={styles.section}>
+                <NumberStepper
+                  value={intervalDays}
+                  label={t('habits:interval_unit', { count: intervalDays })}
+                  min={2}
+                  max={14}
+                  onChange={(value) => {
+                    setIntervalDays(value);
+                    touch();
+                  }}
+                  testID="form-interval"
+                />
+                <AppText variant="small" style={[styles.hint, { color: theme.textMuted }]}>
+                  {t('habits:interval_hint')}
+                </AppText>
+              </Animated.View>
+            )}
+          </Section>
+
+          <Section label={t('habits:time_of_day')}>
+            <View style={styles.chips}>
+              {TIMES_OF_DAY.map((key) => (
+                <Chip
+                  key={key}
+                  label={t(`habits:tod_${key}`)}
+                  selected={timeOfDay === key}
+                  onPress={() => {
+                    setTimeOfDay(key);
+                    touch();
+                  }}
+                  testID={`form-tod-${key}`}
+                />
+              ))}
             </View>
           </Section>
 
@@ -428,6 +584,9 @@ const styles = StyleSheet.create({
   },
   rowText: { flex: 1, fontFamily: 'Manrope_500Medium', fontSize: 15 },
   stepper: { flexDirection: 'row', gap: 8 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  hint: { paddingHorizontal: 4 },
+  unitChip: { flexBasis: '30%' },
   step: {
     flex: 1,
     minHeight: 40,

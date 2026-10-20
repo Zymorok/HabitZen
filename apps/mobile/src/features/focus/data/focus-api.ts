@@ -16,6 +16,8 @@ export interface FocusSession {
   readonly phase: TimerPhase;
   readonly status: FocusStatus;
   readonly revision: number;
+  /** Привычка, в которую засчитается занятие (HZ-08), или null. */
+  readonly habitId: string | null;
   readonly remainingMs: number | null;
   /** Срок окончания уже в часах телефона (с поправкой на расхождение с сервером). */
   readonly deadlineMs: number | null;
@@ -33,6 +35,7 @@ interface SessionRow {
   phase: TimerPhase;
   status: FocusStatus;
   revision: number;
+  habit_id: string | null;
   remaining_ms: number | null;
   deadline_at: string | null;
 }
@@ -49,6 +52,7 @@ export function toSession(row: SessionRow, clockOffsetMs: number): FocusSession 
     phase: row.phase,
     status: row.status,
     revision: row.revision,
+    habitId: row.habit_id ?? null,
     remainingMs: row.remaining_ms,
     deadlineMs: row.deadline_at ? Date.parse(row.deadline_at) - clockOffsetMs : null,
   };
@@ -87,7 +91,7 @@ export async function fetchFocus(): Promise<FocusSnapshot> {
 }
 
 export type FocusCommand =
-  | { readonly kind: 'start'; readonly phase: TimerPhase }
+  | { readonly kind: 'start'; readonly phase: TimerPhase; readonly habitId?: string | null }
   | { readonly kind: 'skip_break' }
   | {
       readonly kind: 'pause' | 'resume' | 'finish' | 'reset';
@@ -105,7 +109,12 @@ export async function runFocusCommand(command: FocusCommand, requestId: string):
   const rpc = client().rpc.bind(client());
   const { error } =
     command.kind === 'start'
-      ? await rpc('start_focus', { p_request_id: requestId, p_phase: command.phase })
+      ? await rpc('start_focus', {
+          p_request_id: requestId,
+          p_phase: command.phase,
+          // NOTE: Перерыв ни во что не засчитывается — привычка только у фокуса.
+          p_habit_id: command.phase === 'focus' ? (command.habitId ?? null) : null,
+        })
       : command.kind === 'skip_break'
         ? await rpc('skip_break', { p_request_id: requestId })
         : await rpc(SESSION_RPC[command.kind], {

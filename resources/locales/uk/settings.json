@@ -31,5 +31,10 @@
   "evening_hint": "Позначити, як минув день",
   "habit_reminders": "Звички з нагадуванням",
   "habit_reminders_empty": "Час нагадування для звички задається в її картці.",
-  "reminders_ask": "Щоб нагадування приходили, дозволь сповіщення."
+  "reminders_ask": "Щоб нагадування приходили, дозволь сповіщення.",
+  "accent_title": "Колір оформлення",
+  "accent_forest": "Ліс",
+  "accent_sunset": "Захід",
+  "accent_ocean": "Океан",
+  "accent_lavender": "Лаванда"
 }

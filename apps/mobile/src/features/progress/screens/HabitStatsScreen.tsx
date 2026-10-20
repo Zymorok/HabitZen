@@ -15,7 +15,6 @@ import { useTranslation } from 'react-i18next';
 import { localDate, startOfIsoWeek } from '@habitzen/core/calendar';
 import { formatCalendarDate, weekdayLabels } from '@habitzen/i18n/formatters';
 import type { SupportedLocale } from '@habitzen/i18n/locales';
-import { darkTheme, lightTheme } from '@habitzen/design/tokens';
 import { motion } from '@habitzen/design/motion';
 import { useAppPreferences } from '../../../core/providers/AppPreferencesProvider';
 import { errorMessageKey } from '../../../core/supabase/errors';
@@ -47,7 +46,7 @@ export function HabitStatsScreen() {
   const insets = useSafeAreaInsets();
   const { t, i18n } = useTranslation(['progress', 'habits', 'common', 'errors']);
   const locale = i18n.language as SupportedLocale;
-  const { theme, night } = useAppPreferences();
+  const { theme, night, palette } = useAppPreferences();
   const habits = useActiveHabits();
   const archive = useArchiveHabit();
   const history = useHabitDays(habitId);
@@ -60,7 +59,7 @@ export function HabitStatsScreen() {
     backgroundColor: interpolateColor(
       night.value,
       [0, 1],
-      [lightTheme.background, darkTheme.background],
+      [palette.light.background, palette.dark.background],
     ),
   }));
 
@@ -265,7 +264,7 @@ function DayList({ days }: { readonly days: readonly HabitDay[] }) {
               style={[
                 styles.mark,
                 done
-                  ? { backgroundColor: '#3E7D50', borderColor: '#3E7D50' }
+                  ? { backgroundColor: theme.success, borderColor: theme.success }
                   : { borderColor: day.status === 'rest' ? theme.border : theme.textMuted },
               ]}
             >

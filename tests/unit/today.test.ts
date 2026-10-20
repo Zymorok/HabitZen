@@ -14,6 +14,13 @@ const item = (status: PlanItem['status']): PlanItem => ({
   status,
   revision: 1,
   localDate: '2026-10-18',
+  target: 1,
+  progress: status === 'completed' ? 1 : 0,
+  goalUnit: 'times',
+  timeOfDay: 'any',
+  flexible: false,
+  weekDone: 0,
+  perWeek: null,
 });
 
 describe('кадр 02: приветствие и прогресс дня', () => {

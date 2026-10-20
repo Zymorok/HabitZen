@@ -10,7 +10,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
-import { darkTheme, lightTheme } from '@habitzen/design/tokens';
 import { motion } from '@habitzen/design/motion';
 import { useAppPreferences } from '../../../core/providers/AppPreferencesProvider';
 import { Icon } from '../../../shared/ui/Icon';
@@ -121,13 +120,14 @@ function DayView({
   readonly value: SharedValue<number>;
   readonly night: SharedValue<number>;
 }) {
+  const { palette } = useAppPreferences();
   const circle = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(
       Math.min(1, value.value),
       [0, 1],
       [
         interpolateColor(night.value, [0, 1], ['#E8EEDC', '#2A4335']),
-        interpolateColor(night.value, [0, 1], [lightTheme.success, darkTheme.success]),
+        interpolateColor(night.value, [0, 1], [palette.light.success, palette.dark.success]),
       ],
     ),
     transform: [{ scale: 0.86 + value.value * 0.14 }],

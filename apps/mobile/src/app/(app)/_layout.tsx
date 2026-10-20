@@ -36,6 +36,7 @@ export default function SignedInLayout() {
         <Stack.Screen name="done" options={{ animation: 'fade', gestureEnabled: false }} />
         <Stack.Screen name="celebration" options={{ animation: 'fade', gestureEnabled: false }} />
         <Stack.Screen name="reminders" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="week" options={{ animation: 'slide_from_right' }} />
       </Stack>
     </>
   );

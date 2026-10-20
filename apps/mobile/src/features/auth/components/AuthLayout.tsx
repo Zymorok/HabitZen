@@ -5,7 +5,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { darkTheme, lightTheme } from '@habitzen/design/tokens';
 import { useAppPreferences } from '../../../core/providers/AppPreferencesProvider';
 import { Icon } from '../../../shared/ui/Icon';
 import { IconButton } from '../../../shared/ui/IconButton';
@@ -34,12 +33,12 @@ export function AuthLayout({
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation('common');
-  const { isDark, night } = useAppPreferences();
+  const { isDark, night, palette } = useAppPreferences();
   const shellStyle = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(
       night.value,
       [0, 1],
-      [lightTheme.background, darkTheme.background],
+      [palette.light.background, palette.dark.background],
     ),
   }));
   return (
@@ -67,7 +66,7 @@ export function AuthLayout({
               onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
             >
               <View style={styles.backIcon}>
-                <Icon name="arrow" color={isDark ? darkTheme.text : lightTheme.text} />
+                <Icon name="arrow" color={isDark ? palette.dark.text : palette.light.text} />
               </View>
             </IconButton>
           </View>

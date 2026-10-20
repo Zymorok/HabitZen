@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../../core/auth/AuthProvider';
-import { fetchCalendarDays, fetchHabitDays } from './progress-api';
+import { fetchCalendarDays, fetchHabitDays, fetchWeekSummary } from './progress-api';
 
 /** Ключи кэша; команды плана сбрасывают их, чтобы календарь сразу видел новую отметку. */
 export const CALENDAR_KEY = 'calendar-days';
 export const HABIT_DAYS_KEY = 'habit-days';
+export const WEEK_SUMMARY_KEY = 'week-summary';
 
 export function useCalendarDays(from: string, to: string) {
   const { session } = useAuth();
@@ -25,5 +26,17 @@ export function useHabitDays(habitId: string | undefined, days = 366) {
     queryKey: [HABIT_DAYS_KEY, userId, habitId, days],
     queryFn: () => fetchHabitDays(habitId ?? '', days),
     enabled: Boolean(userId && habitId),
+  });
+}
+
+/** «Итоги недели» (HZ-08): привычки недели и минуты фокуса. */
+export function useWeekSummary(weekStart: string) {
+  const { session } = useAuth();
+  const userId = session?.user.id;
+  return useQuery({
+    queryKey: [WEEK_SUMMARY_KEY, userId, weekStart],
+    queryFn: () => fetchWeekSummary(weekStart),
+    enabled: Boolean(userId),
+    placeholderData: (previous) => previous,
   });
 }

@@ -2,7 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createTranslator } from '@habitzen/i18n/translator';
 import { resolveLocale } from '@habitzen/i18n/locales';
 import type { LanguagePreference } from '@habitzen/i18n/locales';
-import { darkTheme, lightTheme } from '@habitzen/design/tokens';
+import { palettes } from '@habitzen/design/tokens';
+import type { AccentKey, Palette, ThemeColors } from '@habitzen/design/tokens';
 import { motion } from '@habitzen/design/motion';
 import { getLocales, useLocales } from 'expo-localization';
 import { I18nextProvider } from 'react-i18next';
@@ -17,10 +18,11 @@ import type { AppPreferences, ThemePreference } from '../preferences/preferences
 import { mobileLogger } from '../diagnostics/mobile-logger';
 import { useMotionPolicy } from '../../shared/motion/useMotionPolicy';
 
-type Theme = { [K in keyof typeof lightTheme]: string };
 interface PreferencesContext {
   readonly preferences: AppPreferences;
-  readonly theme: Theme;
+  readonly theme: ThemeColors;
+  /** Палитра выбранной цветовой темы: дневные и ночные цвета для плавной смены дня и ночи. */
+  readonly palette: Palette;
   readonly isDark: boolean;
   /** 0 — день, 1 — ночь. Плавно меняется при смене темы, по нему анимируются небо, свет и цвета. */
   readonly night: SharedValue<number>;
@@ -29,6 +31,7 @@ interface PreferencesContext {
   setTheme(theme: ThemePreference): void;
   setReducedMotion(value: boolean): void;
   setHaptics(value: boolean): void;
+  setAccent(value: AccentKey): void;
 }
 const Context = createContext<PreferencesContext | null>(null);
 const PREFERENCES_KEY = 'habitzen.preferences.v1';
@@ -48,7 +51,8 @@ export function AppPreferencesProvider({ children }: { readonly children: ReactN
     (preferences?.theme ?? 'system') === 'system'
       ? systemTheme === 'dark'
       : preferences?.theme === 'dark';
-  const theme = isDark ? darkTheme : lightTheme;
+  const palette = palettes[preferences?.accent ?? 'forest'];
+  const theme = isDark ? palette.dark : palette.light;
   const { reducedMotion } = useMotionPolicy();
   const night = useSharedValue(isDark ? 1 : 0);
   const themeSettled = useRef(false);
@@ -91,6 +95,9 @@ export function AppPreferencesProvider({ children }: { readonly children: ReactN
   }, []);
   const changeHaptics = useCallback((value: boolean) => {
     setPreferences((current) => ({ ...(current ?? defaultPreferences), haptics: value }));
+  }, []);
+  const changeAccent = useCallback((value: AccentKey) => {
+    setPreferences((current) => ({ ...(current ?? defaultPreferences), accent: value }));
   }, []);
 
   useEffect(() => {
@@ -164,6 +171,7 @@ export function AppPreferencesProvider({ children }: { readonly children: ReactN
         value={{
           preferences,
           theme,
+          palette,
           isDark,
           night,
           persistenceError,
@@ -171,6 +179,7 @@ export function AppPreferencesProvider({ children }: { readonly children: ReactN
           setTheme: changeTheme,
           setReducedMotion: changeReducedMotion,
           setHaptics: changeHaptics,
+          setAccent: changeAccent,
         }}
       >
         {children}

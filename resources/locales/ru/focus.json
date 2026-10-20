@@ -34,5 +34,8 @@
   "today_summary_few": "Сегодня: {{count}} занятия · {{minutes}} мин",
   "today_summary_many": "Сегодня: {{count}} занятий · {{minutes}} мин",
   "today_summary_other": "Сегодня: {{count}} занятия · {{minutes}} мин",
-  "reset_short": "Сброс"
+  "reset_short": "Сброс",
+  "habit_none": "Без привычки",
+  "habit_label": "Фокус для привычки: {{title}}",
+  "habit_pick": "Засчитать фокус в привычку"
 }

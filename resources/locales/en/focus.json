@@ -30,5 +30,8 @@
   "today_summary": "Today: {{count}} sessions · {{minutes}} min",
   "today_summary_one": "Today: {{count}} session · {{minutes}} min",
   "today_summary_other": "Today: {{count}} sessions · {{minutes}} min",
-  "reset_short": "Reset"
+  "reset_short": "Reset",
+  "habit_none": "No habit",
+  "habit_label": "Focus for habit: {{title}}",
+  "habit_pick": "Count focus toward a habit"
 }

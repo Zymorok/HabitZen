@@ -56,7 +56,10 @@ export function WeekBars({
 }
 
 function BarColumn({ bar, height }: { readonly bar: Bar; readonly height: number }) {
-  const { isDark } = useAppPreferences();
+  const { isDark, palette } = useAppPreferences();
+  // NOTE: Оттенки столбиков — из цветовой темы (HZ-08); в «Лесе» они прежние, зелёные.
+  const [d0 = '', d1 = '', d2 = '', d3 = '', d4 = ''] = palette.shades.day;
+  const [n0 = '', n1 = '', n2 = '', n3 = '', n4 = ''] = palette.shades.night;
   const target = bar.future ? 0.2 : bar.value === null ? 0.1 : Math.max(0.14, bar.value);
   const grow = useSharedValue(0);
   useEffect(() => {
@@ -65,15 +68,19 @@ function BarColumn({ bar, height }: { readonly bar: Bar; readonly height: number
   const style = useAnimatedStyle(() => ({ height: grow.value * height }));
   const colors: readonly [string, string] = bar.future
     ? isDark
-      ? ['#2A4335', '#22382C']
-      : ['#E9F0E1', '#DCE7D3']
+      ? [n0, n0]
+      : [d0, d1]
     : bar.strong
-      ? ['#3E7D50', '#2D6249']
+      ? isDark
+        ? [n4, n3]
+        : [d4, palette.light.primary]
       : bar.value !== null && bar.value >= 1
-        ? ['#5C9A68', '#3E7D50']
+        ? isDark
+          ? [n3, n2]
+          : [d3, d4]
         : isDark
-          ? ['#5E9466', '#42704F']
-          : ['#9CC596', '#7EAF7B'];
+          ? [n2, n1]
+          : [d2, d3];
   return (
     <View style={styles.column}>
       <Animated.View style={[styles.bar, style]}>

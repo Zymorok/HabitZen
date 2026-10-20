@@ -7,7 +7,6 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { darkTheme, lightTheme } from '@habitzen/design/tokens';
 import { useAppPreferences } from '../../core/providers/AppPreferencesProvider';
 import { Icon } from './Icon';
 import { ThemedText } from './ThemedText';
@@ -35,18 +34,22 @@ export function TextField({
   readonly hideLabel?: string;
   readonly testID?: string;
 }) {
-  const { theme, night } = useAppPreferences();
+  const { theme, night, palette } = useAppPreferences();
   const [hidden, setHidden] = useState(secure);
   const focus = useSharedValue(0);
   const frameStyle = useAnimatedStyle(() => {
-    const idle = interpolateColor(night.value, [0, 1], [lightTheme.border, darkTheme.border]);
-    const active = interpolateColor(night.value, [0, 1], [lightTheme.primary, darkTheme.primary]);
+    const idle = interpolateColor(night.value, [0, 1], [palette.light.border, palette.dark.border]);
+    const active = interpolateColor(
+      night.value,
+      [0, 1],
+      [palette.light.primary, palette.dark.primary],
+    );
     return {
       borderColor: error ? theme.error : interpolateColor(focus.value, [0, 1], [idle, active]),
       backgroundColor: interpolateColor(
         night.value,
         [0, 1],
-        [lightTheme.surface, darkTheme.surface],
+        [palette.light.surface, palette.dark.surface],
       ),
       boxShadow: `0 0 0 ${focus.value * 3}px rgba(91,140,99,${focus.value * 0.18})`,
     };

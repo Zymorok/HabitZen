@@ -2,7 +2,6 @@ import { StyleSheet } from 'react-native';
 import type { ReactNode } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import Animated, { interpolateColor, useAnimatedStyle } from 'react-native-reanimated';
-import { darkTheme, lightTheme } from '@habitzen/design/tokens';
 import { useAppPreferences } from '../../../core/providers/AppPreferencesProvider';
 
 /** Перевод, закреплённый за показанным языком (см. смену языка в OnboardingScreen). */
@@ -18,14 +17,14 @@ export function DemoCard({
   readonly style?: StyleProp<ViewStyle>;
   readonly testID?: string;
 }) {
-  const { night } = useAppPreferences();
+  const { night, palette } = useAppPreferences();
   const colors = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(
       night.value,
       [0, 1],
       ['rgba(255,252,244,0.94)', 'rgba(32,54,44,0.92)'],
     ),
-    borderColor: interpolateColor(night.value, [0, 1], [lightTheme.border, darkTheme.border]),
+    borderColor: interpolateColor(night.value, [0, 1], [palette.light.border, palette.dark.border]),
   }));
   return (
     <Animated.View testID={testID} style={[styles.card, colors, style]}>

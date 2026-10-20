@@ -11,7 +11,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import type { Tabs } from 'expo-router';
-import { darkTheme, lightTheme } from '@habitzen/design/tokens';
 import { motion } from '@habitzen/design/motion';
 import { useAppPreferences } from '../core/providers/AppPreferencesProvider';
 import { Icon } from '../shared/ui/Icon';
@@ -29,10 +28,18 @@ const TABS: Readonly<Record<string, { icon: IconName; label: string }>> = {
 /** Подложка нижнего меню: цвет плавно меняется вместе с темой. */
 function Bar({ children }: { readonly children: ReactNode }) {
   const insets = useSafeAreaInsets();
-  const { night } = useAppPreferences();
+  const { night, palette } = useAppPreferences();
   const barStyle = useAnimatedStyle(() => ({
-    backgroundColor: interpolateColor(night.value, [0, 1], [lightTheme.surface, darkTheme.surface]),
-    borderTopColor: interpolateColor(night.value, [0, 1], [lightTheme.border, darkTheme.border]),
+    backgroundColor: interpolateColor(
+      night.value,
+      [0, 1],
+      [palette.light.surface, palette.dark.surface],
+    ),
+    borderTopColor: interpolateColor(
+      night.value,
+      [0, 1],
+      [palette.light.border, palette.dark.border],
+    ),
   }));
   return (
     <Animated.View

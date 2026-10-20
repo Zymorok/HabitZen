@@ -26,7 +26,6 @@ import Svg, { Circle, Defs, Ellipse, RadialGradient, Stop } from 'react-native-s
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { darkTheme, lightTheme } from '@habitzen/design/tokens';
 import { useAuth } from '../../../core/auth/AuthProvider';
 import { useAppPreferences } from '../../../core/providers/AppPreferencesProvider';
 import { errorMessageKey } from '../../../core/supabase/errors';
@@ -55,14 +54,14 @@ export function GardenScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { t } = useTranslation(['progress', 'common', 'errors']);
-  const { theme, night, isDark } = useAppPreferences();
+  const { theme, night, isDark, palette } = useAppPreferences();
   const { session } = useAuth();
   const garden = useGarden();
   const shellStyle = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(
       night.value,
       [0, 1],
-      [lightTheme.background, darkTheme.background],
+      [palette.light.background, palette.dark.background],
     ),
   }));
   const fill = useSharedValue(0);

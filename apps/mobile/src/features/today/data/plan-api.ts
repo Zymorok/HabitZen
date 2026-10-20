@@ -1,5 +1,6 @@
 import { supabase } from '../../../core/supabase/client';
 import type { DayOutcome } from '@habitzen/core/streaks';
+import type { GoalUnit, TimeOfDay } from '../../habits/goal';
 
 /**
  * План на день с сервера. Отметка, отмена и «Сегодня отдых» — команды с номером запроса
@@ -16,6 +17,15 @@ export interface PlanItem {
   readonly status: PlanStatus;
   readonly revision: number;
   readonly localDate: string;
+  /** Цель и сколько уже набрано: «3 из 8 стаканов». У «просто отметить» цель 1. */
+  readonly target: number;
+  readonly progress: number;
+  readonly goalUnit: GoalUnit;
+  readonly timeOfDay: TimeOfDay;
+  /** «N раз в неделю»: сегодня по желанию, пока недельная цель не набрана. */
+  readonly flexible: boolean;
+  readonly weekDone: number;
+  readonly perWeek: number | null;
 }
 
 export interface DayResult {
@@ -37,6 +47,13 @@ interface PlanRow {
   status: PlanStatus;
   revision: number;
   local_date: string;
+  target: number;
+  progress: number;
+  flexible: boolean;
+  goal_unit: GoalUnit;
+  time_of_day: TimeOfDay;
+  week_done: number;
+  per_week: number | null;
 }
 
 export async function openTodayPlan(): Promise<PlanItem[]> {
@@ -52,6 +69,13 @@ export async function openTodayPlan(): Promise<PlanItem[]> {
     status: row.status,
     revision: row.revision,
     localDate: row.local_date,
+    target: row.target,
+    progress: row.progress,
+    goalUnit: row.goal_unit,
+    timeOfDay: row.time_of_day,
+    flexible: row.flexible,
+    weekDone: row.week_done,
+    perWeek: row.per_week,
   }));
 }
 
@@ -73,6 +97,28 @@ export async function runPlanCommand(
     p_expected_revision: item.revision,
   });
   if (error) throw error;
+}
+
+export interface ProgressResult {
+  readonly revision: number;
+  readonly status: PlanStatus;
+  readonly progress: number;
+}
+
+/** «+1 стакан» или «−1»: сервер сам отмечает привычку, когда цель набрана. */
+export async function addPlanProgress(
+  item: PlanItem,
+  delta: number,
+  requestId: string,
+): Promise<ProgressResult> {
+  const { data, error } = await client().rpc('add_plan_progress', {
+    p_request_id: requestId,
+    p_item_id: item.itemId,
+    p_expected_revision: item.revision,
+    p_delta: delta,
+  });
+  if (error) throw error;
+  return data as ProgressResult;
 }
 
 export async function fetchDayOutcomes(): Promise<DayResult[]> {

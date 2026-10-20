@@ -14,19 +14,32 @@ import type { LocalDate } from '@habitzen/core/calendar';
 import { formatCalendarDate } from '@habitzen/i18n/formatters';
 import type { SupportedLocale } from '@habitzen/i18n/locales';
 import { useTranslation } from 'react-i18next';
+import { palettes } from '@habitzen/design/tokens';
+import type { Palette } from '@habitzen/design/tokens';
 import { useAppPreferences } from '../../../core/providers/AppPreferencesProvider';
 import { AppText } from '../../../shared/ui/AppText';
 import type { CalendarDay } from '../data/progress-api';
 import { dayIntensity, dayShare } from '../stats';
 
-// NOTE: Чем больше сделано за день, тем гуще зелень кружка (HZ-R08).
-const SHADES = {
-  day: ['#E7EDDD', '#D3E3C8', '#B4CFA6', '#86B283', '#3E7D50'],
-  night: ['#2A4335', '#33553F', '#42704F', '#5E9466', '#A7CEA2'],
+// NOTE: Пропуск, закрытый заморозкой серии (HZ-08), — ледяной голубой кружок.
+const FROZEN = {
+  day: { bg: '#DCEBF5', text: '#2F5B78' },
+  night: { bg: '#2B4152', text: '#CFE3F2' },
 } as const;
 
-export function shadeOf(intensity: number, isDark: boolean): { bg: string; text: string } {
-  const bg = SHADES[isDark ? 'night' : 'day'][intensity] ?? SHADES.day[0];
+// NOTE: Чем больше сделано за день, тем гуще цвет кружка (HZ-R08); оттенки — из темы (HZ-08).
+
+/** Цвет дня, который закрыла заморозка серии (тот же в месяце и на годовой карте). */
+export function frozenShade(isDark: boolean): { bg: string; text: string } {
+  return FROZEN[isDark ? 'night' : 'day'];
+}
+
+export function shadeOf(
+  intensity: number,
+  isDark: boolean,
+  shades: Palette['shades'] = palettes.forest.shades,
+): { bg: string; text: string } {
+  const bg = shades[isDark ? 'night' : 'day'][intensity] ?? shades.day[0] ?? '#E7EDDD';
   const strong = intensity === 4;
   return { bg, text: strong ? (isDark ? '#14231E' : '#FFFDF3') : isDark ? '#F6F3E8' : '#172B22' };
 }
@@ -44,6 +57,7 @@ export const MonthGrid = memo(function MonthGrid({
   width,
   weekdays,
   onSelect,
+  frozen,
 }: {
   readonly month: LocalDate;
   /** Куда перелистнули: новый месяц въезжает с той же стороны. */
@@ -54,6 +68,8 @@ export const MonthGrid = memo(function MonthGrid({
   readonly width: number;
   readonly weekdays: readonly string[];
   readonly onSelect: (date: LocalDate) => void;
+  /** Дни, которые закрыла заморозка серии. */
+  readonly frozen: ReadonlySet<string>;
 }) {
   const { theme } = useAppPreferences();
   const cell = width / 7;
@@ -92,6 +108,7 @@ export const MonthGrid = memo(function MonthGrid({
             day={days.get(date)}
             today={today}
             selected={selected === date}
+            frozen={frozen.has(date)}
             cell={cell}
             circle={circle}
             onSelect={onSelect}
@@ -107,6 +124,7 @@ function DayCell({
   day,
   today,
   selected,
+  frozen,
   cell,
   circle,
   onSelect,
@@ -115,17 +133,18 @@ function DayCell({
   readonly day: CalendarDay | undefined;
   readonly today: LocalDate;
   readonly selected: boolean;
+  readonly frozen: boolean;
   readonly cell: number;
   readonly circle: number;
   readonly onSelect: (date: LocalDate) => void;
 }) {
   const { t, i18n } = useTranslation('progress');
-  const { theme, isDark } = useAppPreferences();
+  const { theme, isDark, palette } = useAppPreferences();
   const isToday = date === today;
   const future = date > today;
   const share = dayShare(day);
   const intensity = future ? 0 : dayIntensity(share);
-  const shade = shadeOf(intensity, isDark);
+  const shade = frozen ? frozenShade(isDark) : shadeOf(intensity, isDark, palette.shades);
   const pop = useSharedValue(1);
   useEffect(() => {
     if (!selected) return;
@@ -143,7 +162,8 @@ function DayCell({
       ? t('day_empty')
       : share === null
         ? t('day_rest')
-        : t('day_progress', { completed: day.completed, total: day.planned - day.skipped });
+        : t('day_progress', { completed: day.completed, total: day.planned - day.skipped }) +
+          (frozen ? `. ${t('day_frozen')}` : '');
   return (
     <Pressable
       onPress={() => onSelect(date)}

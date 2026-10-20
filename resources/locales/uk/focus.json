@@ -34,5 +34,8 @@
   "today_summary_few": "Сьогодні: {{count}} заняття · {{minutes}} хв",
   "today_summary_many": "Сьогодні: {{count}} занять · {{minutes}} хв",
   "today_summary_other": "Сьогодні: {{count}} заняття · {{minutes}} хв",
-  "reset_short": "Скинути"
+  "reset_short": "Скинути",
+  "habit_none": "Без звички",
+  "habit_label": "Фокус для звички: {{title}}",
+  "habit_pick": "Зарахувати фокус у звичку"
 }

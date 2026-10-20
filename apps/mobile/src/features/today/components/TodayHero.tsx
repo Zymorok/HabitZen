@@ -18,6 +18,7 @@ import { useMotionPolicy } from '../../../shared/motion/useMotionPolicy';
 import { Icon } from '../../../shared/ui/Icon';
 import { AppText } from '../../../shared/ui/AppText';
 import { flameColor } from '../streak-look';
+import { MAX_FREEZES } from '@habitzen/core/streaks';
 import { stageIndex } from '../../garden/stage';
 import { TREE_ASPECT, treeArt } from '../../garden/tree-art';
 
@@ -31,11 +32,14 @@ import hillsNight from '../../../../assets/onboarding/hills_night.webp';
  */
 export function TodayHero({
   streak,
+  freezes = 0,
   level,
   height,
   onTreePress,
 }: {
   readonly streak: number;
+  /** Заморозки серии в запасе (HZ-08): ❄ под огоньком. */
+  readonly freezes?: number;
   readonly level: number;
   readonly height: number;
   readonly onTreePress: () => void;
@@ -139,19 +143,33 @@ export function TodayHero({
           />
         </Animated.View>
       </Pressable>
-      {streak > 0 ? (
-        <View style={styles.streak} testID="today-streak">
-          <Animated.View style={flameStyle} testID="today-flame">
-            <Animated.View style={[styles.flameLayer, coldStyle]}>
-              <Icon name="flame" size={18} color="#9AA39A" strokeWidth={2} />
+      <View style={styles.badges}>
+        {streak > 0 ? (
+          <View style={styles.streak} testID="today-streak">
+            <Animated.View style={flameStyle} testID="today-flame">
+              <Animated.View style={[styles.flameLayer, coldStyle]}>
+                <Icon name="flame" size={18} color="#9AA39A" strokeWidth={2} />
+              </Animated.View>
+              <Animated.View style={warmStyle}>
+                <Icon name="flame" size={18} color={flameColor(streak)} strokeWidth={2} />
+              </Animated.View>
             </Animated.View>
-            <Animated.View style={warmStyle}>
-              <Icon name="flame" size={18} color={flameColor(streak)} strokeWidth={2} />
-            </Animated.View>
-          </Animated.View>
-          <AppText style={styles.streakText}>{t('streak_days', { count: streak })}</AppText>
-        </View>
-      ) : null}
+            <AppText style={styles.streakText}>{t('streak_days', { count: streak })}</AppText>
+          </View>
+        ) : null}
+        {freezes > 0 ? (
+          <View
+            style={styles.freeze}
+            accessible
+            accessibilityRole="image"
+            accessibilityLabel={t('freeze_stock', { count: freezes, max: MAX_FREEZES })}
+            testID="today-freezes"
+          >
+            <Icon name="snowflake" size={14} color="#3F6F92" strokeWidth={2} />
+            <AppText style={styles.freezeText}>{freezes}</AppText>
+          </View>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -172,10 +190,16 @@ const styles = StyleSheet.create({
   tree: { transformOrigin: '50% 100%' },
   fill: { width: '100%', height: '100%' },
   dim: { position: 'absolute', left: 0, top: 0, tintColor: '#0A1824' },
-  streak: {
+  // NOTE: Снежинка слева от огонька в одну строку — так она не наезжает на карточку прогресса.
+  badges: {
     position: 'absolute',
     right: 18,
     top: '38%',
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: 6,
+  },
+  streak: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -186,6 +210,17 @@ const styles = StyleSheet.create({
     boxShadow: '0 6px 16px rgba(229,121,62,0.16)',
   },
   flameLayer: { position: 'absolute', left: 0, top: 0 },
+  freeze: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 5,
+    paddingHorizontal: 9,
+    borderRadius: 12,
+    backgroundColor: 'rgba(220,235,245,0.94)',
+    boxShadow: '0 4px 12px rgba(63,111,146,0.16)',
+  },
+  freezeText: { color: '#2F5B78', fontFamily: 'Manrope_700Bold', fontSize: 13, lineHeight: 17 },
   streakText: {
     color: '#8F4520',
     fontFamily: 'Manrope_600SemiBold',

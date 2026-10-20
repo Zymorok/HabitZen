@@ -19,7 +19,6 @@ import Svg, { Circle } from 'react-native-svg';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { darkTheme, lightTheme } from '@habitzen/design/tokens';
 import { motion } from '@habitzen/design/motion';
 import { useAppPreferences } from '../../../core/providers/AppPreferencesProvider';
 import { errorMessageKey } from '../../../core/supabase/errors';
@@ -32,9 +31,12 @@ import { Icon } from '../../../shared/ui/Icon';
 import { IconButton } from '../../../shared/ui/IconButton';
 import { ThemedText } from '../../../shared/ui/ThemedText';
 import { newRequestId } from '../../habits/data/habits-api';
-import { usePlanCommand, useTodayPlan } from '../data/usePlan';
+import { usePlanCommand, usePlanProgress, useTodayPlan } from '../data/usePlan';
+import { goalOfText, goalStep, isCountGoal } from '../../habits/goal';
+import { NumberStepper } from '../../habits/components/FormControls';
 import { RowMenu } from '../../../shared/ui/RowMenu';
 import { StackTabBar } from '../../../navigation/TabBar';
+import { openFocusFor } from '../../../navigation/reset-to';
 
 import leafGreen from '../../../../assets/onboarding/leaf_green.webp';
 import leafOrange from '../../../../assets/onboarding/leaf_orange.webp';
@@ -49,18 +51,25 @@ const LENGTH = 2 * Math.PI * RADIUS;
  * Кадр 04: удержание 1,2 с. Кольцо наполняется, телефон отзывается каждые 200 мс;
  * отпустил раньше — кольцо откатывается и жест отменяется. Отметка засчитывается
  * только после ответа сервера, затем — кадр 05.
+ * NOTE: У привычки с количеством кольцо уже заполнено на набранную долю, снизу — «− 3 стакана +»,
+ * а удержание засчитывает всю цель сразу.
  */
 export function HoldScreen() {
   const { itemId } = useLocalSearchParams<{ itemId: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { t } = useTranslation(['habits', 'errors', 'common', 'progress']);
-  const { theme, night } = useAppPreferences();
+  const { t, i18n } = useTranslation(['habits', 'errors', 'common', 'progress']);
+  const { theme, night, palette } = useAppPreferences();
   const haptics = useHaptics();
   const plan = useTodayPlan();
   const command = usePlanCommand();
+  const amounts = usePlanProgress();
   const item = plan.data?.find((entry) => entry.itemId === itemId);
+  const count = item ? isCountGoal(item.target, item.goalUnit) : false;
+  const share = item && count ? Math.min(1, item.progress / item.target) : 0;
   const hold = useSharedValue(0);
+  // NOTE: Набранная доля цели: «3 из 8» — кольцо заполнено на 38 % ещё до удержания.
+  const base = useSharedValue(share);
   const [percent, setPercent] = useState(0);
   const [hint, setHint] = useState<'idle' | 'short' | 'saving'>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -74,6 +83,9 @@ export function HoldScreen() {
     ticker.current = null;
   };
   useEffect(() => stopTicker, []);
+  useEffect(() => {
+    base.value = withTiming(share, { duration: 320 });
+  }, [share, base]);
 
   const complete = useCallback(() => {
     stopTicker();
@@ -95,7 +107,7 @@ export function HoldScreen() {
   }, [item, command, router, t, hold]);
 
   useAnimatedReaction(
-    () => Math.round(hold.value * 100),
+    () => Math.round((base.value + (1 - base.value) * hold.value) * 100),
     (value, previous) => {
       if (value !== previous) runOnJS(setPercent)(value);
     },
@@ -133,7 +145,9 @@ export function HoldScreen() {
     hold.value = withTiming(0, { duration: 260, easing: Easing.out(Easing.quad) });
   };
 
-  const ringProps = useAnimatedProps(() => ({ strokeDashoffset: LENGTH * (1 - hold.value) }));
+  const ringProps = useAnimatedProps(() => ({
+    strokeDashoffset: LENGTH * (1 - (base.value + (1 - base.value) * hold.value)),
+  }));
   const trackProps = useAnimatedProps(() => ({
     stroke: interpolateColor(night.value, [0, 1], ['#E4ECD9', '#2E4A3B']),
   }));
@@ -142,7 +156,7 @@ export function HoldScreen() {
     backgroundColor: interpolateColor(
       night.value,
       [0, 1],
-      [lightTheme.background, darkTheme.background],
+      [palette.light.background, palette.dark.background],
     ),
   }));
 
@@ -244,9 +258,35 @@ export function HoldScreen() {
           </Animated.View>
         </Pressable>
 
-        <ThemedText variant="title" style={styles.title}>
-          {done ? t('habits:completed') : resting ? t('habits:skipped') : t('habits:hold')}
+        <ThemedText variant="title" style={styles.title} testID="hold-title">
+          {done
+            ? t('habits:completed')
+            : resting
+              ? t('habits:skipped')
+              : count
+                ? t('habits:progress_of', {
+                    done: item.progress,
+                    goal: goalOfText(t, i18n.language, item.target, item.goalUnit),
+                  })
+                : t('habits:hold')}
         </ThemedText>
+        {count && !resting ? (
+          <View style={styles.actions}>
+            <NumberStepper
+              value={item.progress}
+              label={t(`habits:unit_word_${item.goalUnit}`, { count: item.progress })}
+              min={0}
+              max={item.target * 10}
+              step={goalStep(item.goalUnit)}
+              onChange={(value) =>
+                amounts.add(item, value - item.progress, () =>
+                  router.replace({ pathname: '/done', params: { itemId: item.itemId } }),
+                )
+              }
+              testID="hold-amount"
+            />
+          </View>
+        ) : null}
 
         {done || resting ? (
           <View style={styles.actions}>
@@ -264,24 +304,27 @@ export function HoldScreen() {
           </View>
         ) : (
           <>
-            <Finger hold={hold} />
+            {/* NOTE: У количества место пальца занимает счётчик — подсказка остаётся текстом. */}
+            {count ? null : <Finger hold={hold} />}
             <ThemedText tone="textMuted" variant="small" testID="hold-hint">
               {hint === 'saving'
                 ? t('habits:saving')
                 : hint === 'short'
                   ? t('habits:hold_short')
-                  : t('habits:hold_hint')}
+                  : count
+                    ? t('habits:hold_count_hint')
+                    : t('habits:hold_hint')}
             </ThemedText>
           </>
         )}
         {hint === 'saving' ? <ActivityIndicator color={theme.primary} /> : null}
-        {error ? (
+        {error || amounts.error ? (
           <AppText
             variant="small"
             style={{ color: theme.error, textAlign: 'center' }}
             testID="hold-error"
           >
-            {error}
+            {error ?? t(errorMessageKey(amounts.error))}
           </AppText>
         ) : null}
       </View>
@@ -291,6 +334,16 @@ export function HoldScreen() {
         visible={menu}
         onClose={() => setMenu(false)}
         actions={[
+          ...(resting
+            ? []
+            : [
+                {
+                  key: 'focus',
+                  label: t('habits:focus_for'),
+                  icon: 'clock' as const,
+                  onPress: () => openFocusFor(router, item.habitId),
+                },
+              ]),
           {
             key: 'stats',
             label: t('progress:habit_stats'),

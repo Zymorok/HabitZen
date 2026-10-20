@@ -13,7 +13,6 @@ import Animated, {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { darkTheme } from '@habitzen/design/tokens';
 import { motion } from '@habitzen/design/motion';
 import { useAppPreferences } from '../../../core/providers/AppPreferencesProvider';
 import { errorMessageKey } from '../../../core/supabase/errors';
@@ -41,7 +40,7 @@ export function DoneScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation(['habits', 'errors', 'common']);
-  const { theme, night, isDark } = useAppPreferences();
+  const { theme, night, isDark, palette } = useAppPreferences();
   const plan = useTodayPlan();
   const command = usePlanCommand();
   const item = plan.data?.find((entry) => entry.itemId === itemId);
@@ -66,7 +65,7 @@ export function DoneScreen() {
   const popStyle = useAnimatedStyle(() => ({ transform: [{ scale: pop.value }] }));
   const barStyle = useAnimatedStyle(() => ({ width: `${fill.value * 100}%` }));
   const shellStyle = useAnimatedStyle(() => ({
-    backgroundColor: interpolateColor(night.value, [0, 1], ['#FCF7EA', darkTheme.background]),
+    backgroundColor: interpolateColor(night.value, [0, 1], ['#FCF7EA', palette.dark.background]),
   }));
   const garden = useGarden();
   const goToday = () => resetTo(router, '/today');

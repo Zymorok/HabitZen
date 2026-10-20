@@ -18,6 +18,7 @@ describe('Настройки до входа в аккаунт', () => {
       language: 'uk',
       reducedMotion: false,
       haptics: true,
+      accent: 'forest',
     });
   });
   it('восстанавливает тёмную тему и явный язык без подмены на системный', () => {
@@ -27,6 +28,7 @@ describe('Настройки до входа в аккаунт', () => {
       language: 'ru',
       reducedMotion: false,
       haptics: true,
+      accent: 'forest',
     });
   });
   it('помнит «Меньше движения» и выключенную вибрацию', () => {
@@ -38,6 +40,12 @@ describe('Настройки до входа в аккаунт', () => {
     expect(parsePreferences('{"version":1,"reducedMotion":"да","haptics":0}')).toMatchObject({
       reducedMotion: false,
       haptics: true,
+      accent: 'forest',
     });
+  });
+  it('помнит цветовую тему, а незнакомую превращает в «Лес» (HZ-08)', () => {
+    expect(parsePreferences('{"version":1,"accent":"ocean"}').accent).toBe('ocean');
+    expect(parsePreferences('{"version":1,"accent":"neon"}').accent).toBe('forest');
+    expect(parsePreferences('{"version":1}').accent).toBe('forest');
   });
 });

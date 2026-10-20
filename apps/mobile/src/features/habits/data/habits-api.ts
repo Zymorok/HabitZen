@@ -1,6 +1,7 @@
 import { randomUUID } from 'expo-crypto';
 import { supabase } from '../../../core/supabase/client';
 import type { HabitCategory, HabitColor } from '../../../shared/habit-look';
+import type { Frequency, GoalUnit, TimeOfDay } from '../goal';
 
 /**
  * Контракт привычек с сервером. Запись — только через именованные команды (RPC):
@@ -17,6 +18,14 @@ export interface Habit {
   readonly weekdayMask: number;
   /** Время напоминания «ЧЧ:ММ»; пусто — напоминание выключено. */
   readonly reminderTimes: readonly string[];
+  /** Цель на день: 1 раз — «просто отметить», иначе 8 стаканов, 20 минут и т. п. */
+  readonly goalTarget: number;
+  readonly goalUnit: GoalUnit;
+  readonly timeOfDay: TimeOfDay;
+  /** По дням недели, «N раз в неделю» или «каждые N дней». */
+  readonly frequency: Frequency;
+  readonly perWeek: number | null;
+  readonly intervalDays: number | null;
 }
 
 export interface HabitDraft {
@@ -26,6 +35,12 @@ export interface HabitDraft {
   readonly colorKey: HabitColor;
   readonly weekdayMask: number;
   readonly reminderTimes: readonly string[];
+  readonly goalTarget: number;
+  readonly goalUnit: GoalUnit;
+  readonly timeOfDay: TimeOfDay;
+  readonly frequency: Frequency;
+  readonly perWeek: number | null;
+  readonly intervalDays: number | null;
 }
 
 /** Номер запроса: один на действие человека, повтор после сбоя сети отправляет тот же. */
@@ -47,6 +62,12 @@ interface HabitRow {
   revision: number;
   weekday_mask: number;
   reminder_times: string[] | null;
+  goal_target: number;
+  goal_unit: GoalUnit;
+  time_of_day: TimeOfDay;
+  frequency: Frequency;
+  per_week: number | null;
+  interval_days: number | null;
 }
 
 export async function fetchActiveHabits(): Promise<Habit[]> {
@@ -62,6 +83,12 @@ export async function fetchActiveHabits(): Promise<Habit[]> {
     weekdayMask: row.weekday_mask,
     // NOTE: PostgreSQL отдаёт время как «21:00:00» — в форме нужны часы и минуты.
     reminderTimes: (row.reminder_times ?? []).map((time) => time.slice(0, 5)),
+    goalTarget: row.goal_target,
+    goalUnit: row.goal_unit,
+    timeOfDay: row.time_of_day,
+    frequency: row.frequency,
+    perWeek: row.per_week,
+    intervalDays: row.interval_days,
   }));
 }
 
@@ -73,6 +100,12 @@ function draftParams(habit: HabitDraft) {
     p_color_key: habit.colorKey,
     p_weekday_mask: habit.weekdayMask,
     p_reminder_times: habit.reminderTimes,
+    p_goal_target: habit.goalTarget,
+    p_goal_unit: habit.goalUnit,
+    p_time_of_day: habit.timeOfDay,
+    p_frequency: habit.frequency,
+    p_per_week: habit.frequency === 'weekly' ? habit.perWeek : null,
+    p_interval_days: habit.frequency === 'interval' ? habit.intervalDays : null,
   };
 }
 

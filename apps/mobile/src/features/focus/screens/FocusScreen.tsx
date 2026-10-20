@@ -20,6 +20,7 @@ import Animated, {
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import {
   clockText,
@@ -28,7 +29,6 @@ import {
   remainingShare,
   resetTimer,
 } from '@habitzen/core/timer';
-import { darkTheme, lightTheme } from '@habitzen/design/tokens';
 import { motion } from '@habitzen/design/motion';
 import { useAppPreferences } from '../../../core/providers/AppPreferencesProvider';
 import { errorMessageKey } from '../../../core/supabase/errors';
@@ -52,6 +52,9 @@ import { BreathCircle, useBreath } from '../components/BreathCircle';
 import { FocusRing } from '../components/FocusRing';
 import type { RingPalette } from '../components/FocusRing';
 import { useSecondTick } from '../useSecondTick';
+import { HabitChip } from '../components/HabitChip';
+import { useRefreshPlan, useTodayPlan } from '../../today/data/usePlan';
+import { habitIcon } from '../../../shared/habit-look';
 
 import focusScene from '../../../../assets/focus/focus_scene.webp';
 import breakScene from '../../../../assets/focus/break_scene.webp';
@@ -79,19 +82,29 @@ const RINGS: Readonly<Record<'focus' | 'break', { day: RingPalette; night: RingP
  * NOTE: Время считает сервер по сроку окончания. Экран лишь показывает остаток и
  * перечитывает состояние при возвращении в приложение, поэтому сворачивание, перезапуск
  * и второе устройство не сбивают таймер.
+ * NOTE: С HZ-08 фокус можно засчитать в привычку: минуты — в цель «20 минут»,
+ * а полное занятие отмечает привычку «просто отметить».
  */
 export function FocusScreen() {
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const { t } = useTranslation(['focus', 'errors', 'common', 'notifications']);
-  const { theme, night, isDark } = useAppPreferences();
+  const { theme, night, isDark, palette } = useAppPreferences();
   const { foreground } = useMotionPolicy();
   const haptics = useHaptics();
   const focus = useFocusState();
   const command = useFocusCommand();
   const sound = useFocusSound();
   const saveSound = useSaveFocusSound();
-  const [menu, setMenu] = useState<'none' | 'more' | 'sound'>('none');
+  const [menu, setMenu] = useState<'none' | 'more' | 'sound' | 'habit'>('none');
+  const params = useLocalSearchParams<{ habitId?: string }>();
+  const [chosenHabit, setChosenHabit] = useState<string | null>(params.habitId ?? null);
+  // NOTE: «Фокус для привычки» из плана открывает этот экран уже с выбранной привычкой.
+  useEffect(() => {
+    if (params.habitId) setChosenHabit(params.habitId);
+  }, [params.habitId]);
+  const plan = useTodayPlan();
+  const refreshPlan = useRefreshPlan();
   const [error, setError] = useState<string | null>(null);
 
   const snapshot = focus.data;
@@ -101,6 +114,7 @@ export function FocusScreen() {
   );
   const session = snapshot?.session ?? null;
   const running = timer.status === 'running';
+  const sessionHabit = session && session.status !== 'reset' ? session.habitId : null;
   const now = useSecondTick(running && foreground, running ? timer.deadlineMs : null);
   const left = remainingMs(timer, now);
   const isBreak = timer.phase === 'break';
@@ -159,6 +173,15 @@ export function FocusScreen() {
     else void cancelFocusAlert();
   }, [snapshot, timer, t]);
 
+  // NOTE: Засчитанное занятие меняет план, календарь и дерево — перечитываем их.
+  const counted = `${snapshot?.completedToday ?? 0}:${snapshot?.minutesToday ?? 0}`;
+  const lastCounted = useRef(counted);
+  useEffect(() => {
+    if (lastCounted.current === counted) return;
+    lastCounted.current = counted;
+    void refreshPlan();
+  }, [counted, refreshPlan]);
+
   const run = (next: FocusCommand) => {
     setError(null);
     command.mutate(
@@ -177,33 +200,41 @@ export function FocusScreen() {
     backgroundColor: interpolateColor(
       night.value,
       [0, 1],
-      [lightTheme.background, darkTheme.background],
+      [palette.light.background, palette.dark.background],
     ),
   }));
   const archProps = useAnimatedProps(() => ({
-    fill: interpolateColor(night.value, [0, 1], [lightTheme.background, darkTheme.background]),
+    fill: interpolateColor(
+      night.value,
+      [0, 1],
+      [palette.light.background, palette.dark.background],
+    ),
   }));
   const panelStyle = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(
       night.value,
       [0, 1],
-      [lightTheme.background, darkTheme.background],
+      [palette.light.background, palette.dark.background],
     ),
   }));
 
   const breath = useBreath(isBreak && timer.status !== 'paused');
   const panel = isBreak ? PANEL_BREAK : PANEL_FOCUS;
   const tabBar = 64 + Math.max(insets.bottom, 8);
-  const header = Math.max(insets.top, 14) + (isBreak ? 96 : 56);
+  // NOTE: Пилюля привычки под заголовком фокуса занимает ещё ~40 точек.
+  const header = Math.max(insets.top, 14) + 96;
   const ringSize = Math.round(
     Math.max(220, Math.min(320, width - 72, height - tabBar - header - panel - 70)),
   );
   // NOTE: Пейзаж заканчивается под дугой панели — ниже его закрывает кремовая панель.
   const sceneHeight = Math.max(height - tabBar - panel + 4, ringSize + header);
-  const palette = RINGS[timer.phase][isDark ? 'night' : 'day'];
+  const ringPalette = RINGS[timer.phase][isDark ? 'night' : 'day'];
   const active = session !== null && (session.status === 'running' || session.status === 'paused');
   const filledDots = Math.min(DOTS, (snapshot?.completedToday ?? 0) + (active && !isBreak ? 1 : 0));
   const soundLabel = t(soundChoice === 'none' ? 'focus:sound_none' : `focus:${soundChoice}`);
+  const planItems = (plan.data ?? []).filter((item) => item.status !== 'skipped');
+  const shownHabitId = active ? sessionHabit : chosenHabit;
+  const shownHabit = planItems.find((item) => item.habitId === shownHabitId) ?? null;
 
   if (focus.isPending) {
     return (
@@ -249,6 +280,22 @@ export function FocusScreen() {
       onPress: () => setTimeout(() => setMenu('sound'), 250),
     },
   ];
+  const habitActions: MenuAction[] = [
+    {
+      key: 'habit-none',
+      label: t('focus:habit_none'),
+      icon: 'leaf',
+      selected: shownHabit === null,
+      onPress: () => setChosenHabit(null),
+    },
+    ...planItems.map((item) => ({
+      key: `habit-${item.habitId}`,
+      label: item.title,
+      icon: habitIcon(item.iconKey),
+      selected: item.habitId === shownHabit?.habitId,
+      onPress: () => setChosenHabit(item.habitId),
+    })),
+  ];
   const soundActions: MenuAction[] = FOCUS_SOUNDS.map((choice) => ({
     key: `sound-${choice}`,
     label: t(choice === 'none' ? 'focus:sound_none' : `focus:${choice}`),
@@ -258,7 +305,8 @@ export function FocusScreen() {
   }));
 
   const mainAction = (): void => {
-    if (!session || !active) run({ kind: 'start', phase: timer.phase });
+    if (!session || !active)
+      run({ kind: 'start', phase: timer.phase, habitId: shownHabit?.habitId ?? null });
     else if (session.status === 'running') run({ kind: 'pause', session });
     else run({ kind: 'resume', session });
   };
@@ -320,6 +368,14 @@ export function FocusScreen() {
             </IconButton>
           </View>
         )}
+        {!isBreak && (planItems.length > 0 || shownHabit) ? (
+          <HabitChip
+            title={shownHabit?.title ?? null}
+            iconKey={shownHabit?.iconKey ?? null}
+            locked={active}
+            onPress={() => setMenu('habit')}
+          />
+        ) : null}
       </View>
 
       <View style={styles.ringArea}>
@@ -335,7 +391,7 @@ export function FocusScreen() {
             stroke={ringSize > 260 ? 15 : 13}
             share={ring.share}
             runningMs={ring.runningMs}
-            palette={palette}
+            palette={ringPalette}
             id={`ring-${timer.phase}`}
           >
             {isBreak ? (
@@ -471,10 +527,12 @@ export function FocusScreen() {
                 count: snapshot?.completedToday ?? 0,
                 minutes: snapshot?.minutesToday ?? 0,
               })
-            : t('focus:screen_title')
+            : menu === 'habit'
+              ? t('focus:habit_pick')
+              : t('focus:screen_title')
         }
         visible={menu !== 'none'}
-        actions={menu === 'sound' ? soundActions : moreActions}
+        actions={menu === 'sound' ? soundActions : menu === 'habit' ? habitActions : moreActions}
         onClose={() => setMenu('none')}
       />
     </Animated.View>

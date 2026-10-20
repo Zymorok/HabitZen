@@ -49,3 +49,20 @@ export function weekdayLabels(locale: SupportedLocale): string[] {
       .toLocaleUpperCase(locale),
   );
 }
+
+/** Короткий месяц для подписи годовой карты: «окт», «Oct» — ровно три буквы, чтобы не налезали. */
+export function formatShortMonth(date: LocalDate, locale: SupportedLocale): string {
+  return new Intl.DateTimeFormat(locale, { timeZone: 'UTC', month: 'short' })
+    .format(new Date(date + 'T12:00:00Z'))
+    .replace('.', '')
+    .slice(0, 3);
+}
+
+/** Неделя для «Итогов недели»: «13–19 октября», «October 13–19», «29 сентября – 5 октября». */
+export function formatDateRange(from: LocalDate, to: LocalDate, locale: SupportedLocale): string {
+  if (from.slice(0, 7) !== to.slice(0, 7))
+    return `${formatCalendarDate(from, locale)} – ${formatCalendarDate(to, locale)}`;
+  return locale === 'en'
+    ? `${formatCalendarDate(from, locale)}–${Number(to.slice(8))}`
+    : `${Number(from.slice(8))}–${formatCalendarDate(to, locale)}`;
+}

@@ -20,7 +20,6 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import Constants from 'expo-constants';
-import { darkTheme, lightTheme } from '@habitzen/design/tokens';
 import { useAuth } from '../../../core/auth/AuthProvider';
 import { useAppPreferences } from '../../../core/providers/AppPreferencesProvider';
 import { resetTo } from '../../../navigation/reset-to';
@@ -33,6 +32,7 @@ import { ThemedText } from '../../../shared/ui/ThemedText';
 import { useDisplayName } from '../../habits/data/useHabits';
 import { useSaveDisplayName, useSaveSettings, useUserSettings } from '../data/useSettings';
 import { ThemePreview } from '../components/ThemePreview';
+import { AccentPicker } from '../components/AccentPicker';
 
 /**
  * Кадр 12 «Настройки»: профиль, напоминания, тёмная тема, звуки и предпросмотр темы.
@@ -45,7 +45,7 @@ export function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { t, i18n } = useTranslation(['settings', 'auth', 'common']);
-  const { theme, isDark, night, preferences, setTheme, setReducedMotion, setHaptics } =
+  const { theme, isDark, night, palette, preferences, setTheme, setReducedMotion, setHaptics } =
     useAppPreferences();
   const { signOut, session } = useAuth();
   const name = useDisplayName();
@@ -56,7 +56,7 @@ export function SettingsScreen() {
     backgroundColor: interpolateColor(
       night.value,
       [0, 1],
-      [lightTheme.background, darkTheme.background],
+      [palette.light.background, palette.dark.background],
     ),
   }));
   const displayName = name.data ?? session?.user.email ?? '';
@@ -182,6 +182,12 @@ export function SettingsScreen() {
             <Icon name="system" size={18} color={theme.primary} />
             <AppText style={styles.systemText}>{t('settings:system')}</AppText>
           </Pressable>
+        </Animated.View>
+
+        {/* NOTE: Цветовая тема (HZ-08) — ниже светлой и тёмной, тоже хранится на устройстве. */}
+        <Animated.View entering={FadeInDown.delay(165).duration(320)} style={styles.section}>
+          <AppText style={styles.sectionTitle}>{t('settings:accent_title')}</AppText>
+          <AccentPicker />
         </Animated.View>
 
         {/* NOTE: «Удобство» — ниже макета: вибрацию и движение можно выключить (HZ-R27). */}

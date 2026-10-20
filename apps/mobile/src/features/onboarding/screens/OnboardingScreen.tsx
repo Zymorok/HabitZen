@@ -18,7 +18,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { StatusBar } from 'expo-status-bar';
-import { darkTheme, lightTheme } from '@habitzen/design/tokens';
 import { motion } from '@habitzen/design/motion';
 import { useAppPreferences } from '../../../core/providers/AppPreferencesProvider';
 import { Button } from '../../../shared/ui/Button';
@@ -57,7 +56,7 @@ export function OnboardingScreen() {
   const router = useRouter();
   const { i18n, t: liveT } = useTranslation('onboarding');
   const { t: liveCommon } = useTranslation('common');
-  const { isDark, night } = useAppPreferences();
+  const { isDark, night, palette } = useAppPreferences();
   const { time, animate, reducedMotion } = useWorldClock();
   const haptics = useHaptics();
   const [activePage, setActivePage] = useState(0);
@@ -155,7 +154,7 @@ export function OnboardingScreen() {
     backgroundColor: interpolateColor(
       night.value,
       [0, 1],
-      [lightTheme.background, darkTheme.background],
+      [palette.light.background, palette.dark.background],
     ),
   }));
 
@@ -239,7 +238,7 @@ export function OnboardingScreen() {
                       <Icon
                         name="bell"
                         size={16}
-                        color={isDark ? darkTheme.primary : lightTheme.primary}
+                        color={isDark ? palette.dark.primary : palette.light.primary}
                       />
                       <ThemedText variant="button" tone="primary" style={styles.remindersText}>
                         {t('configure_reminders')}
@@ -380,13 +379,18 @@ function Dot({
   readonly scrollX: SharedValue<number>;
   readonly night: SharedValue<number>;
 }) {
+  const { palette } = useAppPreferences();
   const style = useAnimatedStyle(() => {
     const closeness = Math.max(0, 1 - Math.abs(scrollX.value / width - index));
-    const active = interpolateColor(night.value, [0, 1], [lightTheme.primary, darkTheme.primary]);
+    const active = interpolateColor(
+      night.value,
+      [0, 1],
+      [palette.light.primary, palette.dark.primary],
+    );
     const idle = interpolateColor(
       night.value,
       [0, 1],
-      [lightTheme.primarySoft, darkTheme.primarySoft],
+      [palette.light.primarySoft, palette.dark.primarySoft],
     );
     return {
       width: interpolate(closeness, [0, 1], [6, 20]),
@@ -409,6 +413,7 @@ function ThemedIcon({
   readonly night: SharedValue<number>;
   readonly spin?: boolean;
 }) {
+  const { palette } = useAppPreferences();
   const dayStyle = useAnimatedStyle(() => ({
     opacity: 1 - night.value,
     transform: [
@@ -426,10 +431,10 @@ function ThemedIcon({
   return (
     <View style={styles.iconStack}>
       <Animated.View style={[StyleSheet.absoluteFill, styles.iconCenter, dayStyle]}>
-        <Icon name={light} color={lightTheme.text} size={spin ? 26 : 23} />
+        <Icon name={light} color={palette.light.text} size={spin ? 26 : 23} />
       </Animated.View>
       <Animated.View style={[StyleSheet.absoluteFill, styles.iconCenter, nightStyle]}>
-        <Icon name={dark} color={darkTheme.text} size={spin ? 24 : 23} />
+        <Icon name={dark} color={palette.dark.text} size={spin ? 24 : 23} />
       </Animated.View>
     </View>
   );

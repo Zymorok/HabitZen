@@ -11,7 +11,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
-import { darkTheme, lightTheme } from '@habitzen/design/tokens';
 import { motion } from '@habitzen/design/motion';
 import { useAppPreferences } from '../../../core/providers/AppPreferencesProvider';
 import { Icon } from '../../../shared/ui/Icon';
@@ -131,7 +130,7 @@ function HabitRow({
   readonly last: boolean;
   readonly holdLabel: string;
 }) {
-  const { night, theme } = useAppPreferences();
+  const { night, theme, palette } = useAppPreferences();
   const rowStyle = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(
       Math.min(1, done.value),
@@ -144,7 +143,11 @@ function HabitRow({
   }));
   const fillStyle = useAnimatedStyle(() => ({
     transform: [{ scale: Math.max(hold.value * 0.92, Math.min(1, done.value)) }],
-    backgroundColor: interpolateColor(night.value, [0, 1], [lightTheme.success, darkTheme.success]),
+    backgroundColor: interpolateColor(
+      night.value,
+      [0, 1],
+      [palette.light.success, palette.dark.success],
+    ),
   }));
   const checkStyle = useAnimatedStyle(() => ({
     opacity: Math.min(1, done.value),
@@ -154,7 +157,7 @@ function HabitRow({
     borderColor: interpolateColor(
       night.value,
       [0, 1],
-      [lightTheme.primarySoft, darkTheme.primarySoft],
+      [palette.light.primarySoft, palette.dark.primarySoft],
     ),
   }));
   const fingerStyle = useAnimatedStyle(() => {

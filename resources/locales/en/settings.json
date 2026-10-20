@@ -31,5 +31,10 @@
   "evening_hint": "Check in on how the day went",
   "habit_reminders": "Habits with a reminder",
   "habit_reminders_empty": "Set a reminder time on a habit’s card.",
-  "reminders_ask": "Allow notifications so reminders can arrive."
+  "reminders_ask": "Allow notifications so reminders can arrive.",
+  "accent_title": "Color theme",
+  "accent_forest": "Forest",
+  "accent_sunset": "Sunset",
+  "accent_ocean": "Ocean",
+  "accent_lavender": "Lavender"
 }

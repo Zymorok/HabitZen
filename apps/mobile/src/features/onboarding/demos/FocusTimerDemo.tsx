@@ -10,7 +10,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 import type { SharedValue } from 'react-native-reanimated';
-import { darkTheme, lightTheme } from '@habitzen/design/tokens';
 import { useAppPreferences } from '../../../core/providers/AppPreferencesProvider';
 import { Icon } from '../../../shared/ui/Icon';
 import { ThemedText } from '../../../shared/ui/ThemedText';
@@ -37,7 +36,7 @@ function format(seconds: number): string {
  * затем режим меняется на перерыв — кольцо становится персиковым.
  */
 export function FocusTimerDemo({ t, active }: { readonly t: Translate; readonly active: boolean }) {
-  const { night } = useAppPreferences();
+  const { night, palette } = useAppPreferences();
   const { animate } = useWorld();
   const [{ mode, seconds }, setClock] = useState<{ mode: 'focus' | 'break'; seconds: number }>({
     mode: 'focus',
@@ -76,7 +75,7 @@ export function FocusTimerDemo({ t, active }: { readonly t: Translate; readonly 
       breakMode.value,
       [0, 1],
       [
-        interpolateColor(night.value, [0, 1], [lightTheme.primary, darkTheme.primary]),
+        interpolateColor(night.value, [0, 1], [palette.light.primary, palette.dark.primary]),
         interpolateColor(night.value, [0, 1], ['#E98A55', '#F3B483']),
       ],
     ),

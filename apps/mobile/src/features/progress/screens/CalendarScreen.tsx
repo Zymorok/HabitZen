@@ -33,7 +33,6 @@ import {
   weekdayLabels,
 } from '@habitzen/i18n/formatters';
 import type { SupportedLocale } from '@habitzen/i18n/locales';
-import { darkTheme, lightTheme } from '@habitzen/design/tokens';
 import { useAppPreferences } from '../../../core/providers/AppPreferencesProvider';
 import { errorMessageKey } from '../../../core/supabase/errors';
 import { habitColor, habitIcon } from '../../../shared/habit-look';
@@ -44,10 +43,12 @@ import { IconButton } from '../../../shared/ui/IconButton';
 import { ThemedText } from '../../../shared/ui/ThemedText';
 import { useActiveHabits } from '../../habits/data/useHabits';
 import { useStreak } from '../../today/data/usePlan';
+import { MAX_FREEZES } from '@habitzen/core/streaks';
 import { useCalendarDays } from '../data/useProgress';
 import { MonthGrid } from '../components/MonthGrid';
 import { WeekBars } from '../components/WeekBars';
-import { dayShare, totalCompleted, weekSummary } from '../stats';
+import { YearMap } from '../components/YearMap';
+import { dayShare, totalCompleted, weekSummary, yearGrid } from '../stats';
 
 const MONTHS_BACK = 12;
 
@@ -66,11 +67,12 @@ export function CalendarScreen() {
   const { width } = useWindowDimensions();
   const { t, i18n } = useTranslation(['progress', 'errors', 'common']);
   const locale = i18n.language as SupportedLocale;
-  const { theme, night } = useAppPreferences();
+  const { theme, night, palette } = useAppPreferences();
   const streak = useStreak();
   const habits = useActiveHabits();
   // NOTE: «Сегодня» — по поясу профиля с сервера; часы телефона — только пока он не ответил.
   const today = localDate(streak.data?.today ?? deviceToday());
+  const frozen = useMemo(() => new Set<string>(streak.data?.frozen ?? []), [streak.data?.frozen]);
   const [month, setMonth] = useState<LocalDate>(() => shiftMonth(today, 0));
   const [direction, setDirection] = useState<-1 | 0 | 1>(0);
   const [picked, setPicked] = useState<LocalDate | null>(null);
@@ -99,12 +101,16 @@ export function CalendarScreen() {
   const weekdays = useMemo(() => weekdayLabels(locale), [locale]);
   const completedInMonth = totalCompleted(calendar.data ?? [], monthStart, monthEnd);
   const gridWidth = Math.min(width, 520) - 32;
+  // NOTE: Годовая карта (HZ-08) — отдельный запрос за 53 недели, независимый от месяца.
+  const yearStart = addCalendarDays(startOfIsoWeek(today), -52 * 7);
+  const year = useCalendarDays(yearStart, today);
+  const grid = useMemo(() => yearGrid(year.data ?? [], today), [year.data, today]);
 
   const shellStyle = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(
       night.value,
       [0, 1],
-      [lightTheme.background, darkTheme.background],
+      [palette.light.background, palette.dark.background],
     ),
   }));
   const changeMonth = (step: -1 | 1) => {
@@ -128,7 +134,7 @@ export function CalendarScreen() {
           : t('progress:day_progress', {
               completed: selectedDay.completed,
               total: selectedDay.planned - selectedDay.skipped,
-            });
+            }) + (frozen.has(selected) ? `. ${t('progress:day_frozen')}` : '');
 
   return (
     <Animated.View style={[styles.shell, shellStyle]} testID="progress-screen">
@@ -196,6 +202,7 @@ export function CalendarScreen() {
               width={gridWidth}
               weekdays={weekdays}
               onSelect={onSelect}
+              frozen={frozen}
             />
             {calendar.isPending ? <ActivityIndicator color={theme.primary} /> : null}
 
@@ -245,6 +252,48 @@ export function CalendarScreen() {
                 value={week.percent === null ? '—' : formatPercent(week.percent, locale)}
                 caption={t('progress:week_percent_caption')}
                 testID="stat-week"
+              />
+            </View>
+            {streak.data ? (
+              <FreezeCard freezes={streak.data.freezes} nextIn={streak.data.nextFreezeIn} />
+            ) : null}
+
+            <Pressable
+              onPress={() =>
+                router.push({ pathname: '/week', params: { start: startOfIsoWeek(selected) } })
+              }
+              accessibilityRole="button"
+              accessibilityLabel={t('progress:week_summary')}
+              testID="open-week"
+              style={[
+                styles.weekLink,
+                { backgroundColor: theme.surface, borderColor: theme.border },
+              ]}
+            >
+              <View style={[styles.weekLinkIcon, { backgroundColor: theme.surfaceMuted }]}>
+                <Icon name="chart" size={20} color={theme.primary} strokeWidth={2} />
+              </View>
+              <View style={styles.dayText}>
+                <AppText style={styles.weekLinkTitle}>{t('progress:week_summary')}</AppText>
+                <AppText variant="small" style={{ color: theme.textMuted }}>
+                  {t('progress:week_summary_hint')}
+                </AppText>
+              </View>
+              <Icon name="arrow" size={18} color={theme.textMuted} />
+            </Pressable>
+
+            <View style={styles.yearHead}>
+              <AppText style={styles.sectionTitle}>{t('progress:year_title')}</AppText>
+              <AppText variant="small" style={{ color: theme.textMuted }} testID="year-active">
+                {year.isPending ? ' ' : t('progress:year_active', { count: grid.activeDays })}
+              </AppText>
+            </View>
+            <View testID="year-map">
+              <YearMap
+                columns={grid.columns}
+                months={grid.months}
+                frozen={frozen}
+                width={gridWidth}
               />
             </View>
           </>
@@ -321,6 +370,39 @@ function Stat({
   );
 }
 
+/** Заморозка серии (HZ-08): сколько в запасе и сколько дней до следующей. */
+function FreezeCard({ freezes, nextIn }: { readonly freezes: number; readonly nextIn: number }) {
+  const { t } = useTranslation('progress');
+  const { isDark } = useAppPreferences();
+  const ice = isDark
+    ? { bg: '#22394A', icon: '#9CC3DF', text: '#D8E9F5', muted: '#A9C3D6' }
+    : { bg: '#E6F0F7', icon: '#3F6F92', text: '#1F4560', muted: '#4B6F88' };
+  return (
+    <Animated.View
+      entering={FadeIn.duration(300)}
+      style={[styles.freezeCard, { backgroundColor: ice.bg }]}
+      testID="freeze-card"
+    >
+      <View style={styles.freezeIcons}>
+        {Array.from({ length: MAX_FREEZES }, (_, index) => (
+          // NOTE: Пустые места запаса — бледные снежинки: видно, сколько ещё можно накопить.
+          <View key={index} style={{ opacity: index < freezes ? 1 : 0.3 }}>
+            <Icon name="snowflake" size={22} color={ice.icon} strokeWidth={2} />
+          </View>
+        ))}
+      </View>
+      <View style={styles.dayText}>
+        <AppText style={[styles.freezeTitle, { color: ice.text }]} testID="freeze-stock">
+          {t('freeze_stock', { count: freezes, max: MAX_FREEZES })}
+        </AppText>
+        <AppText variant="small" style={{ color: ice.muted }}>
+          {nextIn === 0 ? t('freeze_full') : t('freeze_next', { count: nextIn })}
+        </AppText>
+      </View>
+    </Animated.View>
+  );
+}
+
 const styles = StyleSheet.create({
   shell: { flex: 1 },
   content: {
@@ -371,6 +453,38 @@ const styles = StyleSheet.create({
   // иногда измеряется уже, чем рисуется, и вторая строка обрезается.
   statCaption: { fontSize: 13, lineHeight: 17, textAlign: 'center', alignSelf: 'stretch' },
   divider: { width: StyleSheet.hairlineWidth, alignSelf: 'stretch', marginVertical: 6 },
+  weekLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 12,
+  },
+  weekLinkIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  weekLinkTitle: { fontFamily: 'Manrope_600SemiBold', fontSize: 15 },
+  yearHead: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  freezeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    borderRadius: 18,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+  },
+  freezeIcons: { flexDirection: 'row', gap: 2 },
+  freezeTitle: { fontFamily: 'Manrope_600SemiBold', fontSize: 15 },
   habitList: { borderRadius: 22, borderWidth: 1, overflow: 'hidden' },
   habitRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, minHeight: 60 },
   habitIcon: {

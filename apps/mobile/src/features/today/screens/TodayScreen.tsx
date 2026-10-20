@@ -21,7 +21,6 @@ import { useTranslation } from 'react-i18next';
 import { localDate } from '@habitzen/core/calendar';
 import { formatCalendarDate } from '@habitzen/i18n/formatters';
 import type { SupportedLocale } from '@habitzen/i18n/locales';
-import { darkTheme, lightTheme } from '@habitzen/design/tokens';
 import { motion } from '@habitzen/design/motion';
 import { useAppPreferences } from '../../../core/providers/AppPreferencesProvider';
 import { errorMessageKey } from '../../../core/supabase/errors';
@@ -32,24 +31,36 @@ import { ThemedText } from '../../../shared/ui/ThemedText';
 import { newRequestId } from '../../habits/data/habits-api';
 import { useGarden } from '../../garden/data/useGarden';
 import { useActiveHabits, useArchiveHabit } from '../../habits/data/useHabits';
-import { planProgress, usePlanCommand, useStreak, useTodayPlan } from '../data/usePlan';
+import {
+  planProgress,
+  usePlanCommand,
+  usePlanProgress,
+  useStreak,
+  useTodayPlan,
+} from '../data/usePlan';
+import { goalStep, groupByTimeOfDay } from '../../habits/goal';
 import type { PlanItem } from '../data/plan-api';
 import { greetingKey, isDaytime } from '../greeting';
 import { PlanRow } from '../components/PlanRow';
 import { RowMenu } from '../../../shared/ui/RowMenu';
 import type { MenuAction } from '../../../shared/ui/RowMenu';
 import { TodayHero } from '../components/TodayHero';
+import { openFocusFor } from '../../../navigation/reset-to';
 
-/** Кадр 02 «План на день»: приветствие, дерево и серия, прогресс дня, привычки на сегодня. */
+/**
+ * Кадр 02 «План на день»: приветствие, дерево и серия, прогресс дня, привычки на сегодня.
+ * NOTE: С HZ-08 привычки делятся на «Утро / День / Вечер», если хоть у одной задано время дня.
+ */
 export function TodayScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { t, i18n } = useTranslation(['habits', 'errors', 'common', 'progress']);
-  const { theme, night } = useAppPreferences();
+  const { theme, night, palette } = useAppPreferences();
   const plan = useTodayPlan();
   const streak = useStreak();
   const garden = useGarden();
   const command = usePlanCommand();
+  const amounts = usePlanProgress();
   const habits = useActiveHabits();
   const archive = useArchiveHabit();
   const [menuItem, setMenuItem] = useState<PlanItem | null>(null);
@@ -58,11 +69,13 @@ export function TodayScreen() {
   const hour = new Date().getHours();
   const items = useMemo(() => plan.data ?? [], [plan.data]);
   const progress = planProgress(items);
+  const groups = useMemo(() => groupByTimeOfDay(items), [items]);
+  const amountError = amounts.error ? t(errorMessageKey(amounts.error)) : null;
   const shellStyle = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(
       night.value,
       [0, 1],
-      [lightTheme.background, darkTheme.background],
+      [palette.light.background, palette.dark.background],
     ),
   }));
   const date = items[0]?.localDate ?? new Date().toISOString().slice(0, 10);
@@ -96,6 +109,13 @@ export function TodayScreen() {
         label: t('habits:undo'),
         icon: 'arrow',
         onPress: () => run('undo', item),
+      });
+    if (item.status !== 'skipped')
+      list.push({
+        key: 'focus',
+        label: t('habits:focus_for'),
+        icon: 'clock',
+        onPress: () => openFocusFor(router, item.habitId),
       });
     if (habit) {
       list.push({
@@ -158,6 +178,7 @@ export function TodayScreen() {
         </View>
         <TodayHero
           streak={streak.data?.current ?? 0}
+          freezes={streak.data?.freezes ?? 0}
           level={garden.data?.level ?? 1}
           height={168}
           onTreePress={() => router.push('/garden')}
@@ -197,34 +218,60 @@ export function TodayScreen() {
                 total={progress.total}
                 allDone={progress.allDone}
               />
-              <Animated.View
-                entering={FadeInDown.delay(80).duration(380)}
-                style={[styles.list, { backgroundColor: theme.surface, borderColor: theme.border }]}
-                testID="plan-list"
-              >
-                {items.map((item, index) => (
-                  <PlanRow
-                    key={item.itemId}
-                    item={item}
-                    busy={busyItem === item.itemId}
-                    last={index === items.length - 1}
-                    onOpen={() =>
-                      router.push({ pathname: '/habit/[itemId]', params: { itemId: item.itemId } })
-                    }
-                    onSkip={() => run('skip', item)}
-                    onMenu={() => setMenuItem(item)}
-                  />
+              <View testID="plan-list" style={styles.groups}>
+                {groups.map((group, groupIndex) => (
+                  <Animated.View
+                    key={group.key}
+                    entering={FadeInDown.delay(80 + groupIndex * 60).duration(380)}
+                    style={styles.group}
+                    testID={`plan-section-${group.key}`}
+                  >
+                    {group.titled ? (
+                      <ThemedText tone="textMuted" variant="small" style={styles.groupTitle}>
+                        {t(`habits:section_${group.key}`)}
+                      </ThemedText>
+                    ) : null}
+                    <View
+                      style={[
+                        styles.list,
+                        { backgroundColor: theme.surface, borderColor: theme.border },
+                      ]}
+                    >
+                      {group.items.map((item, index) => (
+                        <PlanRow
+                          key={item.itemId}
+                          item={item}
+                          busy={busyItem === item.itemId}
+                          last={index === group.items.length - 1}
+                          onOpen={() =>
+                            router.push({
+                              pathname: '/habit/[itemId]',
+                              params: { itemId: item.itemId },
+                            })
+                          }
+                          onSkip={() => run('skip', item)}
+                          onMenu={() => setMenuItem(item)}
+                          onAdd={() =>
+                            // NOTE: Набранная цель ведёт на кадр 05, как и отметка удержанием.
+                            amounts.add(item, goalStep(item.goalUnit), () =>
+                              router.push({ pathname: '/done', params: { itemId: item.itemId } }),
+                            )
+                          }
+                        />
+                      ))}
+                    </View>
+                  </Animated.View>
                 ))}
-              </Animated.View>
+              </View>
             </>
           )}
-          {actionError ? (
+          {actionError || amountError ? (
             <AppText
               variant="small"
               style={{ color: theme.error, textAlign: 'center' }}
               testID="today-action-error"
             >
-              {actionError}
+              {actionError ?? amountError}
             </AppText>
           ) : null}
         </View>
@@ -268,7 +315,9 @@ function ProgressCard({
       ]}
       testID="today-progress"
     >
-      <AppText style={styles.progressText}>{t('daily_progress', { completed, total })}</AppText>
+      <AppText style={styles.progressText}>
+        {total > 0 ? t('daily_progress', { completed, total }) : t('daily_optional')}
+      </AppText>
       <View style={[styles.track, { backgroundColor: theme.surfaceMuted }]}>
         <Animated.View style={[styles.bar, { backgroundColor: theme.success }, barStyle]} />
       </View>
@@ -364,6 +413,9 @@ const styles = StyleSheet.create({
   track: { height: 8, borderRadius: 4, overflow: 'hidden' },
   bar: { height: '100%', borderRadius: 4 },
   doneRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  groups: { gap: 12 },
+  group: { gap: 6 },
+  groupTitle: { fontFamily: 'Manrope_600SemiBold', paddingHorizontal: 6 },
   list: {
     borderRadius: 22,
     borderWidth: 1,

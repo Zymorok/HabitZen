@@ -15,6 +15,7 @@ export type IconName =
   | 'settings'
   | 'arrow'
   | 'flame'
+  | 'snowflake'
   | 'pause'
   | 'walk'
   | 'eye'
@@ -112,6 +113,12 @@ export function Icon({
       {name === 'arrow' ? <Path d="m9 5 7 7-7 7" /> : null}
       {name === 'flame' ? (
         <Path d="M12 22c4 0 7-3 7-7 0-5-4-7-5-11-2 2-3 4-3 6-1-1-2-2-2-4-2 2-4 5-4 9 0 4 3 7 7 7Z" />
+      ) : null}
+      {name === 'snowflake' ? (
+        <>
+          <Path d="M12 2v20M3.3 7l17.4 10M3.3 17 20.7 7" />
+          <Path d="m9 3.5 3 2.5 3-2.5M9 20.5l3-2.5 3 2.5M3.6 10.6l3.6-1.3-.6-3.8M20.4 13.4l-3.6 1.3.6 3.8M6.6 18.5l.6-3.8-3.6-1.3M17.4 5.5l-.6 3.8 3.6 1.3" />
+        </>
       ) : null}
       {name === 'pause' ? <Path d="M9 6v12M15 6v12" /> : null}
       {name === 'eye' ? (

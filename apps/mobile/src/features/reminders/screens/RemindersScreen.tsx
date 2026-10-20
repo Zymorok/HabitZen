@@ -9,7 +9,6 @@ import Animated, {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { darkTheme, lightTheme } from '@habitzen/design/tokens';
 import { useAppPreferences } from '../../../core/providers/AppPreferencesProvider';
 import { useNotificationPermission } from '../../../platform/permissions/useNotificationPermission';
 import { habitColor, habitIcon } from '../../../shared/habit-look';
@@ -31,7 +30,7 @@ export function RemindersScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation(['settings', 'habits', 'common', 'permissions']);
-  const { theme, night } = useAppPreferences();
+  const { theme, night, palette } = useAppPreferences();
   const settings = useUserSettings();
   const save = useSaveSettings();
   const habits = useActiveHabits();
@@ -41,7 +40,7 @@ export function RemindersScreen() {
     backgroundColor: interpolateColor(
       night.value,
       [0, 1],
-      [lightTheme.background, darkTheme.background],
+      [palette.light.background, palette.dark.background],
     ),
   }));
   const enabled = settings.data?.remindersEnabled ?? false;

@@ -2,8 +2,8 @@ import { StyleSheet, View } from 'react-native';
 import { useMemo } from 'react';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
-import { darkTheme, lightTheme } from '@habitzen/design/tokens';
 import { useWorld } from './WorldContext';
+import { useAppPreferences } from '../../../core/providers/AppPreferencesProvider';
 import { PAGE_COUNT } from './geometry';
 
 /**
@@ -11,6 +11,7 @@ import { PAGE_COUNT } from './geometry';
  * а песок — в цвет фона под кнопками. Объекты страниц стоят на этой кромке.
  */
 export function Ground() {
+  const { palette } = useAppPreferences();
   const { width, height, groundY, night } = useWorld();
   const top = groundY - width * 0.07;
   const bandHeight = Math.max(40, height - top);
@@ -41,8 +42,8 @@ export function Ground() {
             <Stop offset="0" stopColor="#B4CB8E" />
             <Stop offset={String(fade * 0.16)} stopColor="#CBD6A2" />
             <Stop offset={String(fade * 0.45)} stopColor="#EADFC0" />
-            <Stop offset={String(fade)} stopColor={lightTheme.background} />
-            <Stop offset="1" stopColor={lightTheme.background} />
+            <Stop offset={String(fade)} stopColor={palette.light.background} />
+            <Stop offset="1" stopColor={palette.light.background} />
           </LinearGradient>
         </Defs>
         <Path d={path} fill="url(#groundDay)" />
@@ -54,8 +55,8 @@ export function Ground() {
               <Stop offset="0" stopColor="#36543F" />
               <Stop offset={String(fade * 0.16)} stopColor="#2A4234" />
               <Stop offset={String(fade * 0.45)} stopColor="#1D3029" />
-              <Stop offset={String(fade)} stopColor={darkTheme.background} />
-              <Stop offset="1" stopColor={darkTheme.background} />
+              <Stop offset={String(fade)} stopColor={palette.dark.background} />
+              <Stop offset="1" stopColor={palette.dark.background} />
             </LinearGradient>
           </Defs>
           <Path d={path} fill="url(#groundNight)" />
