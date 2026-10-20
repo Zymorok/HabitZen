@@ -33,3 +33,15 @@ export function orderOf(positions: Positions): string[] {
     (left, right) => (positions[left] ?? 0) - (positions[right] ?? 0),
   );
 }
+
+/**
+ * Новый порядок части привычек (например, раздела «Утро» в плане дня) внутри общего списка:
+ * остальные остаются на своих местах, переставленные занимают места друг друга (HZ-10).
+ */
+export function mergeOrder(all: readonly string[], subset: readonly string[]): string[] {
+  const known = new Set(all);
+  const moved = subset.filter((id) => known.has(id));
+  const inSubset = new Set(moved);
+  let next = 0;
+  return all.map((id) => (inSubset.has(id) ? (moved[next++] ?? id) : id));
+}

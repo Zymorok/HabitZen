@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -45,6 +46,9 @@ import {
 } from '../goal';
 import type { Frequency, GoalUnit, TimeOfDay } from '../goal';
 import { Chip, NumberStepper } from '../components/FormControls';
+import { ICON_COLOR, suggestIcon, TEMPLATES } from '../templates';
+import type { HabitTemplate } from '../templates';
+import { habitArt } from '../../../shared/habit-art';
 
 /**
  * Кадр 03 «Новая привычка» (и изменение существующей по ?id=…):
@@ -64,6 +68,12 @@ export function HabitFormScreen() {
   const [title, setTitle] = useState('');
   const [icon, setIcon] = useState(ICON_CHOICES[0]!);
   const [color, setColor] = useState<HabitColor>('sage');
+  // NOTE: Пока человек сам не выбрал значок и цвет, они подбираются по названию (HZ-10).
+  const [iconTouched, setIconTouched] = useState(false);
+  const [gridWidth, setGridWidth] = useState(0);
+  // NOTE: Пять плиток в ряд с промежутками по 8.
+  const tileSize = gridWidth > 0 ? Math.floor((gridWidth - 4 * 8) / 5) : 56;
+  const [colorTouched, setColorTouched] = useState(false);
   const [mask, setMask] = useState(ALL_WEEKDAYS);
   const [time, setTime] = useState('21:00');
   const [reminders, setReminders] = useState(false);
@@ -86,6 +96,8 @@ export function HabitFormScreen() {
     if (!existing) return;
     setTitle(existing.title);
     setIcon(ICON_CHOICES.find((choice) => choice.icon === existing.iconKey) ?? ICON_CHOICES[0]!);
+    setIconTouched(true);
+    setColorTouched(true);
     setColor(existing.colorKey);
     setMask(existing.weekdayMask);
     setReminders(existing.reminderTimes.length > 0);
@@ -103,6 +115,38 @@ export function HabitFormScreen() {
 
   // NOTE: Любая правка — уже другое действие, ему нужен новый номер запроса.
   const touch = () => setRequestId(newRequestId());
+
+  const changeTitle = (value: string) => {
+    setTitle(value);
+    touch();
+    if (iconTouched) return;
+    const suggested = suggestIcon(value);
+    const choice = suggested ? ICON_CHOICES.find((entry) => entry.icon === suggested) : null;
+    if (!choice) return;
+    setIcon(choice);
+    const suggestedColor = ICON_COLOR[choice.icon];
+    if (!colorTouched && suggestedColor) setColor(suggestedColor);
+  };
+
+  /** «Быстрый старт»: шаблон заполняет форму целиком, дальше её можно поправить. */
+  const applyTemplate = (template: HabitTemplate) => {
+    setTitle(t(`habits:template_${template.key}`));
+    setIcon(ICON_CHOICES.find((entry) => entry.icon === template.icon) ?? ICON_CHOICES[0]!);
+    setColor(template.color);
+    setIconTouched(true);
+    setColorTouched(true);
+    const count = isCountGoal(template.goalTarget, template.goalUnit);
+    setGoalCount(count);
+    if (count) {
+      setGoalUnit(template.goalUnit);
+      setGoalTarget(template.goalTarget);
+    }
+    setFrequency(template.frequency);
+    if (template.perWeek) setPerWeek(template.perWeek);
+    setTimeOfDay(template.timeOfDay);
+    setMask(ALL_WEEKDAYS);
+    touch();
+  };
   const shortNames = t('habits:weekdays_short').split(',');
   const shellStyle = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(
@@ -168,22 +212,60 @@ export function HabitFormScreen() {
           ]}
           keyboardShouldPersistTaps="handled"
         >
+          {existing ? null : (
+            <Animated.View entering={FadeInDown.duration(320)} style={styles.section}>
+              <ThemedText variant="small" tone="textMuted" style={styles.sectionLabel}>
+                {t('habits:quick_start')}
+              </ThemedText>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.templates}
+                testID="form-templates"
+              >
+                {TEMPLATES.map((template) => (
+                  <Pressable
+                    key={template.key}
+                    onPress={() => applyTemplate(template)}
+                    accessibilityRole="button"
+                    accessibilityLabel={t(`habits:template_${template.key}`)}
+                    testID={`template-${template.key}`}
+                    style={[
+                      styles.template,
+                      { backgroundColor: theme.surface, borderColor: theme.border },
+                    ]}
+                  >
+                    <Image
+                      source={habitArt(template.icon)}
+                      style={styles.templateArt}
+                      resizeMode="contain"
+                      accessible={false}
+                    />
+                    <AppText style={styles.templateText} numberOfLines={1}>
+                      {t(`habits:template_${template.key}`)}
+                    </AppText>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </Animated.View>
+          )}
+
           <Animated.View entering={FadeInDown.duration(320)}>
             <TextField
               label={t('habits:title_label')}
               placeholder={t('habits:title_placeholder')}
               value={title}
-              onChangeText={(value) => {
-                setTitle(value);
-                touch();
-              }}
+              onChangeText={changeTitle}
               maxLength={120}
               testID="form-title"
             />
           </Animated.View>
 
           <Section label={t('habits:icon')}>
-            <View style={styles.iconRow}>
+            <View
+              style={styles.iconRow}
+              onLayout={(event) => setGridWidth(event.nativeEvent.layout.width)}
+            >
               {ICON_CHOICES.map((choice) => {
                 const selected = choice.icon === icon.icon;
                 return (
@@ -191,23 +273,28 @@ export function HabitFormScreen() {
                     key={choice.icon}
                     onPress={() => {
                       setIcon(choice);
+                      setIconTouched(true);
                       touch();
                     }}
                     accessibilityRole="radio"
                     aria-checked={selected}
-                    accessibilityLabel={t(`habits:category_${choice.category}`)}
+                    accessibilityLabel={t(`habits:icon_${choice.icon}`)}
                     testID={`form-icon-${choice.icon}`}
                     style={[
                       styles.iconTile,
+                      { width: tileSize, height: tileSize },
                       selected
-                        ? { backgroundColor: theme.primary, borderColor: theme.primary }
+                        ? { backgroundColor: theme.surfaceMuted, borderColor: theme.primary }
                         : { borderColor: theme.border, backgroundColor: theme.surface },
+                      selected ? styles.iconTileSelected : null,
                     ]}
                   >
-                    <Icon
-                      name={choice.icon}
-                      size={22}
-                      color={selected ? theme.background : theme.primary}
+                    {/* NOTE: HZ-10 — в выборе цветные значки, как в плане дня: так их проще узнать. */}
+                    <Image
+                      source={habitArt(choice.icon)}
+                      style={styles.iconArt}
+                      resizeMode="contain"
+                      accessible={false}
                     />
                   </Pressable>
                 );
@@ -224,6 +311,7 @@ export function HabitFormScreen() {
                     key={key}
                     onPress={() => {
                       setColor(key);
+                      setColorTouched(true);
                       touch();
                     }}
                     accessibilityRole="radio"
@@ -544,11 +632,11 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: 20, paddingTop: 8, gap: 16 },
   section: { gap: 8 },
   sectionLabel: { fontFamily: 'Manrope_500Medium', paddingHorizontal: 4 },
-  iconRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
+  // NOTE: 15 значков (HZ-10) — сетка по пять в ряд вместо одной строки.
+  iconRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  // WARNING: Размер плитки считается от ширины сетки: проценты с aspectRatio на Android
+  // оставляли под сеткой пустую полосу.
   iconTile: {
-    flex: 1,
-    aspectRatio: 1,
-    maxWidth: 58,
     borderRadius: 16,
     borderWidth: 1.25,
     alignItems: 'center',
@@ -586,6 +674,21 @@ const styles = StyleSheet.create({
   stepper: { flexDirection: 'row', gap: 8 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   hint: { paddingHorizontal: 4 },
+  iconTileSelected: { borderWidth: 2.5 },
+  iconArt: { width: '62%', height: '62%' },
+  templates: { gap: 8, paddingRight: 4 },
+  template: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    minHeight: 44,
+    paddingLeft: 10,
+    paddingRight: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  templateArt: { width: 24, height: 24 },
+  templateText: { fontFamily: 'Manrope_600SemiBold', fontSize: 14 },
   unitChip: { flexBasis: '30%' },
   step: {
     flex: 1,

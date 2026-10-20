@@ -1,45 +1,8 @@
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { Platform } from 'react-native';
 
-export type IconName =
-  | 'globe'
-  | 'sun'
-  | 'moon'
-  | 'close'
-  | 'check'
-  | 'bell'
-  | 'leaf'
-  | 'book'
-  | 'drop'
-  | 'system'
-  | 'settings'
-  | 'arrow'
-  | 'flame'
-  | 'snowflake'
-  | 'pause'
-  | 'walk'
-  | 'eye'
-  | 'eyeOff'
-  | 'logout'
-  | 'plus'
-  | 'archive'
-  | 'home'
-  | 'timer'
-  | 'chart'
-  | 'user'
-  | 'heart'
-  | 'more'
-  | 'hand'
-  | 'clock'
-  | 'play'
-  | 'reset'
-  | 'menu'
-  | 'sound'
-  | 'soundOff'
-  | 'sprout'
-  | 'crown'
-  | 'pencil'
-  | 'calendar';
+import type { IconName } from './icon-names';
+export type { IconName } from './icon-names';
 export function Icon({
   name,
   size = 22,
@@ -224,6 +187,65 @@ export function Icon({
         <>
           <Rect x="4" y="5.5" width="16" height="14.5" rx="3" />
           <Path d="M8 3.5v4M16 3.5v4M4 10h16" />
+        </>
+      ) : null}
+      {/* NOTE: HZ-10 — значки новых привычек и достижений. */}
+      {name === 'dumbbell' ? (
+        <>
+          <Rect x="2.5" y="9" width="3" height="6" rx="1" />
+          <Rect x="5.5" y="7" width="3" height="10" rx="1" />
+          <Rect x="15.5" y="7" width="3" height="10" rx="1" />
+          <Rect x="18.5" y="9" width="3" height="6" rx="1" />
+          <Path d="M8.5 12h7" />
+        </>
+      ) : null}
+      {name === 'run' ? (
+        <>
+          <Circle cx="15" cy="4.5" r="2" />
+          <Path d="M9 20.5l2.5-5 3 2.5V22M7 11.5l2.5-3.5h4l2 3.5 3 1M11.5 15.5l1.5-7.5" />
+        </>
+      ) : null}
+      {name === 'apple' ? (
+        <>
+          <Path d="M12 7.5c-1.5-1.2-5-1.3-6.3 1.6-1.6 3.6.6 9.4 3.3 10.8 1.2.6 2 .1 3-.4 1 .5 1.8 1 3 .4 2.7-1.4 4.9-7.2 3.3-10.8C17 6.2 13.5 6.3 12 7.5Z" />
+          <Path d="M12 7.5c0-2 .8-3.5 2.5-4.5" />
+        </>
+      ) : null}
+      {name === 'music' ? (
+        <>
+          <Path d="M9 18V6l11-2v12" />
+          <Circle cx="6.5" cy="18" r="2.5" />
+          <Circle cx="17.5" cy="16" r="2.5" />
+        </>
+      ) : null}
+      {name === 'pill' ? (
+        <>
+          <Path d="M10.5 20.5a5 5 0 0 1-7-7l6-6a5 5 0 0 1 7 7l-6 6Z" />
+          <Path d="m7 10 7 7" />
+        </>
+      ) : null}
+      {name === 'coin' ? (
+        <>
+          <Circle cx="12" cy="12" r="8.5" />
+          <Circle cx="12" cy="12" r="5" />
+        </>
+      ) : null}
+      {name === 'phoneOff' ? (
+        <>
+          <Rect x="6.5" y="2.5" width="11" height="19" rx="2.5" />
+          <Path d="M11 18.5h2M14.5 8.5a3 3 0 0 1-4-4 3 3 0 1 0 4 4Z" />
+        </>
+      ) : null}
+      {name === 'trophy' ? (
+        <>
+          <Path d="M8 4h8v5a4 4 0 0 1-8 0V4Z" />
+          <Path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20.5h7M9.5 20.5c0-2 1-3.5 2.5-3.5s2.5 1.5 2.5 3.5" />
+        </>
+      ) : null}
+      {name === 'lock' ? (
+        <>
+          <Rect x="5" y="10.5" width="14" height="10" rx="2.5" />
+          <Path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" />
         </>
       ) : null}
     </Svg>

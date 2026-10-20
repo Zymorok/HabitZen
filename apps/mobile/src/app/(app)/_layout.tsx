@@ -38,6 +38,7 @@ export default function SignedInLayout() {
         <Stack.Screen name="reminders" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="week" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="habits" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="achievements" options={{ animation: 'slide_from_right' }} />
       </Stack>
     </>
   );

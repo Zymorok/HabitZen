@@ -1,19 +1,19 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   Pressable,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
+import { ScrollView } from 'react-native-gesture-handler';
 import Animated, {
   FadeInDown,
   interpolateColor,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
-  withTiming,
 } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -30,7 +30,10 @@ import { Icon } from '../../../shared/ui/Icon';
 import { ThemedText } from '../../../shared/ui/ThemedText';
 import { newRequestId } from '../../habits/data/habits-api';
 import { useGarden } from '../../garden/data/useGarden';
-import { useActiveHabits, useArchiveHabit } from '../../habits/data/useHabits';
+import { useActiveHabits, useArchiveHabit, useReorderHabits } from '../../habits/data/useHabits';
+import { SortableList } from '../../habits/components/SortableList';
+import { mergeOrder } from '../../habits/order';
+import { habitArt } from '../../../shared/habit-art';
 import {
   planProgress,
   usePlanCommand,
@@ -45,6 +48,8 @@ import { PlanRow } from '../components/PlanRow';
 import { RowMenu } from '../../../shared/ui/RowMenu';
 import type { MenuAction } from '../../../shared/ui/RowMenu';
 import { TodayHero } from '../components/TodayHero';
+import { DayCard } from '../components/DayCard';
+import { AchievementToast } from '../../achievements/components/AchievementToast';
 import { openFocusFor } from '../../../navigation/reset-to';
 
 /**
@@ -63,6 +68,10 @@ export function TodayScreen() {
   const amounts = usePlanProgress();
   const habits = useActiveHabits();
   const archive = useArchiveHabit();
+  const reorder = useReorderHabits();
+  // NOTE: Режим «Порядок» (HZ-10): строки тянут за «≡» прямо в плане, внутри своего раздела.
+  const [ordering, setOrdering] = useState(false);
+  const [dragging, setDragging] = useState(false);
   const [menuItem, setMenuItem] = useState<PlanItem | null>(null);
   const [busyItem, setBusyItem] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -96,6 +105,13 @@ export function TodayScreen() {
   const menuActions = (item: PlanItem): MenuAction[] => {
     const habit = habits.data?.find((entry) => entry.id === item.habitId);
     const list: MenuAction[] = [];
+    if (items.length > 1)
+      list.push({
+        key: 'order',
+        label: t('habits:order_mode'),
+        icon: 'menu',
+        onPress: () => setOrdering(true),
+      });
     if (item.status === 'pending')
       list.push({
         key: 'skip',
@@ -149,6 +165,7 @@ export function TodayScreen() {
   return (
     <Animated.View style={[styles.shell, shellStyle]} testID="today-screen">
       <ScrollView
+        scrollEnabled={!dragging}
         contentContainerStyle={{ paddingBottom: 120 }}
         refreshControl={
           <RefreshControl
@@ -213,11 +230,53 @@ export function TodayScreen() {
             />
           ) : (
             <>
-              <ProgressCard
+              <DayCard
                 completed={progress.completed}
                 total={progress.total}
                 allDone={progress.allDone}
+                date={date}
+                onWeekPress={() => router.push('/progress')}
               />
+              {items.length > 1 ? (
+                <View style={styles.orderBar}>
+                  {ordering ? (
+                    <AppText variant="small" style={[styles.orderHint, { color: theme.textMuted }]}>
+                      {t('habits:order_hint_short')}
+                    </AppText>
+                  ) : (
+                    <View style={styles.orderHint} />
+                  )}
+                  <Pressable
+                    onPress={() => setOrdering((value) => !value)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: ordering }}
+                    hitSlop={8}
+                    testID={ordering ? 'today-order-done' : 'today-order'}
+                    style={[
+                      styles.orderButton,
+                      ordering
+                        ? { backgroundColor: theme.primary }
+                        : { backgroundColor: theme.surfaceMuted },
+                    ]}
+                  >
+                    <Icon
+                      name={ordering ? 'check' : 'menu'}
+                      size={15}
+                      color={ordering ? theme.background : theme.primary}
+                      strokeWidth={2.2}
+                    />
+                    <AppText
+                      variant="small"
+                      style={[
+                        styles.orderText,
+                        { color: ordering ? theme.background : theme.primary },
+                      ]}
+                    >
+                      {ordering ? t('habits:order_done') : t('habits:order_mode')}
+                    </AppText>
+                  </Pressable>
+                </View>
+              ) : null}
               <View testID="plan-list" style={styles.groups}>
                 {groups.map((group, groupIndex) => (
                   <Animated.View
@@ -237,28 +296,66 @@ export function TodayScreen() {
                         { backgroundColor: theme.surface, borderColor: theme.border },
                       ]}
                     >
-                      {group.items.map((item, index) => (
-                        <PlanRow
-                          key={item.itemId}
-                          item={item}
-                          busy={busyItem === item.itemId}
-                          last={index === group.items.length - 1}
-                          onOpen={() =>
-                            router.push({
-                              pathname: '/habit/[itemId]',
-                              params: { itemId: item.itemId },
+                      {ordering ? (
+                        <SortableList
+                          ids={group.items.map((item) => item.itemId)}
+                          rowHeight={60}
+                          onDragging={setDragging}
+                          onReorder={(itemIds) => {
+                            const habitIds = itemIds.flatMap((itemId) => {
+                              const found = group.items.find((item) => item.itemId === itemId);
+                              return found ? [found.habitId] : [];
+                            });
+                            const all = (habits.data ?? []).map((habit) => habit.id);
+                            setActionError(null);
+                            reorder.mutate(
+                              { ids: mergeOrder(all, habitIds), requestId: newRequestId() },
+                              { onError: (error) => setActionError(t(errorMessageKey(error))) },
+                            );
+                          }}
+                          moveUpLabel={t('habits:move_up')}
+                          moveDownLabel={t('habits:move_down')}
+                          handleLabel={(itemId) =>
+                            t('habits:drag_habit', {
+                              title:
+                                group.items.find((item) => item.itemId === itemId)?.title ?? '',
                             })
                           }
-                          onSkip={() => run('skip', item)}
-                          onMenu={() => setMenuItem(item)}
-                          onAdd={() =>
-                            // NOTE: Набранная цель ведёт на кадр 05, как и отметка удержанием.
-                            amounts.add(item, goalStep(item.goalUnit), () =>
-                              router.push({ pathname: '/done', params: { itemId: item.itemId } }),
-                            )
-                          }
+                          renderRow={(itemId) => {
+                            const item = group.items.find((entry) => entry.itemId === itemId);
+                            return item ? (
+                              <OrderRow title={item.title} iconKey={item.iconKey} />
+                            ) : null;
+                          }}
                         />
-                      ))}
+                      ) : null}
+                      {ordering
+                        ? null
+                        : group.items.map((item, index) => (
+                            <PlanRow
+                              key={item.itemId}
+                              item={item}
+                              busy={busyItem === item.itemId}
+                              last={index === group.items.length - 1}
+                              onOpen={() =>
+                                router.push({
+                                  pathname: '/habit/[itemId]',
+                                  params: { itemId: item.itemId },
+                                })
+                              }
+                              onSkip={() => run('skip', item)}
+                              onMenu={() => setMenuItem(item)}
+                              onAdd={() =>
+                                // NOTE: Набранная цель ведёт на кадр 05, как и отметка удержанием.
+                                amounts.add(item, goalStep(item.goalUnit), () =>
+                                  router.push({
+                                    pathname: '/done',
+                                    params: { itemId: item.itemId },
+                                  }),
+                                )
+                              }
+                            />
+                          ))}
                     </View>
                   </Animated.View>
                 ))}
@@ -279,56 +376,14 @@ export function TodayScreen() {
       {items.length > 0 ? (
         <AddButton onPress={() => router.push('/habit/new')} label={t('habits:new_habit')} />
       ) : null}
+      {/* NOTE: «Новое достижение!» (HZ-10) выезжает поверх экрана один раз. */}
+      <AchievementToast />
       <RowMenu
         title={menuItem?.title ?? ''}
         visible={menuItem !== null}
         actions={menuItem ? menuActions(menuItem) : []}
         onClose={() => setMenuItem(null)}
       />
-    </Animated.View>
-  );
-}
-
-function ProgressCard({
-  completed,
-  total,
-  allDone,
-}: {
-  readonly completed: number;
-  readonly total: number;
-  readonly allDone: boolean;
-}) {
-  const { t } = useTranslation('habits');
-  const { theme } = useAppPreferences();
-  const fill = useSharedValue(0);
-  useEffect(() => {
-    fill.value = withTiming(total ? completed / total : 0, { duration: 650 });
-  }, [completed, total, fill]);
-  const barStyle = useAnimatedStyle(() => ({ width: `${fill.value * 100}%` }));
-  return (
-    <Animated.View
-      entering={FadeInDown.duration(360)}
-      style={[
-        styles.card,
-        styles.progressCard,
-        { backgroundColor: theme.surface, borderColor: theme.border },
-      ]}
-      testID="today-progress"
-    >
-      <AppText style={styles.progressText}>
-        {total > 0 ? t('daily_progress', { completed, total }) : t('daily_optional')}
-      </AppText>
-      <View style={[styles.track, { backgroundColor: theme.surfaceMuted }]}>
-        <Animated.View style={[styles.bar, { backgroundColor: theme.success }, barStyle]} />
-      </View>
-      {allDone ? (
-        <View style={styles.doneRow}>
-          <Icon name="leaf" size={15} color={theme.success} />
-          <AppText variant="small" style={{ color: theme.success }} testID="today-all-done">
-            {t('day_complete')}
-          </AppText>
-        </View>
-      ) : null}
     </Animated.View>
   );
 }
@@ -363,6 +418,18 @@ function EmptyPlan({
       </ThemedText>
       <Button label={t('new_habit')} onPress={onCreate} testID="today-create" />
     </Animated.View>
+  );
+}
+
+/** Строка в режиме «Порядок»: только значок и название — нажатия и свайпы отключены. */
+function OrderRow({ title, iconKey }: { readonly title: string; readonly iconKey: string }) {
+  return (
+    <View style={styles.orderRow} testID="order-row">
+      <Image source={habitArt(iconKey)} style={styles.orderArt} resizeMode="contain" />
+      <AppText numberOfLines={1} style={styles.orderTitle}>
+        {title}
+      </AppText>
+    </View>
   );
 }
 
@@ -408,12 +475,21 @@ const styles = StyleSheet.create({
   body: { paddingHorizontal: 18, marginTop: -26, gap: 12 },
   center: { alignItems: 'center', justifyContent: 'center', gap: 12, paddingVertical: 24 },
   card: { borderRadius: 22, borderWidth: 1, boxShadow: '0 10px 26px rgba(18,47,32,0.08)' },
-  progressCard: { paddingHorizontal: 18, paddingVertical: 14, gap: 10 },
-  progressText: { fontFamily: 'Manrope_600SemiBold', fontSize: 15 },
-  track: { height: 8, borderRadius: 4, overflow: 'hidden' },
-  bar: { height: '100%', borderRadius: 4 },
-  doneRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   groups: { gap: 12 },
+  orderBar: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: -4 },
+  orderHint: { flex: 1, paddingHorizontal: 6 },
+  orderButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 14,
+  },
+  orderText: { fontFamily: 'Manrope_600SemiBold' },
+  orderRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, paddingRight: 14 },
+  orderArt: { width: 30, height: 30 },
+  orderTitle: { flex: 1, fontFamily: 'Manrope_500Medium', fontSize: 15 },
   group: { gap: 6 },
   groupTitle: { fontFamily: 'Manrope_600SemiBold', paddingHorizontal: 6 },
   list: {

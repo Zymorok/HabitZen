@@ -48,6 +48,7 @@ import { useCalendarDays } from '../data/useProgress';
 import { MonthGrid } from '../components/MonthGrid';
 import { WeekBars } from '../components/WeekBars';
 import { YearMap } from '../components/YearMap';
+import { useAchievements } from '../../achievements/useAchievements';
 import { dayShare, totalCompleted, weekSummary, yearGrid } from '../stats';
 
 const MONTHS_BACK = 12;
@@ -104,6 +105,8 @@ export function CalendarScreen() {
   // NOTE: Годовая карта (HZ-08) — отдельный запрос за 53 недели, независимый от месяца.
   const yearStart = addCalendarDays(startOfIsoWeek(today), -52 * 7);
   const year = useCalendarDays(yearStart, today);
+  const achievements = useAchievements();
+  const achieved = achievements?.filter((item) => item.unlocked).length ?? 0;
   const grid = useMemo(() => yearGrid(year.data ?? [], today), [year.data, today]);
 
   const shellStyle = useAnimatedStyle(() => ({
@@ -277,6 +280,37 @@ export function CalendarScreen() {
                 <AppText style={styles.weekLinkTitle}>{t('progress:week_summary')}</AppText>
                 <AppText variant="small" style={{ color: theme.textMuted }}>
                   {t('progress:week_summary_hint')}
+                </AppText>
+              </View>
+              <Icon name="arrow" size={18} color={theme.textMuted} />
+            </Pressable>
+
+            <Pressable
+              onPress={() => router.push('/achievements')}
+              accessibilityRole="button"
+              accessibilityLabel={t('progress:achievements_title')}
+              testID="open-achievements"
+              style={[
+                styles.weekLink,
+                { backgroundColor: theme.surface, borderColor: theme.border },
+              ]}
+            >
+              <View style={[styles.weekLinkIcon, styles.trophyIcon]}>
+                <Icon name="trophy" size={20} color="#FFFDF3" strokeWidth={2} />
+              </View>
+              <View style={styles.dayText}>
+                <AppText style={styles.weekLinkTitle}>{t('progress:achievements_title')}</AppText>
+                <AppText
+                  variant="small"
+                  style={{ color: theme.textMuted }}
+                  testID="achievements-short"
+                >
+                  {achievements
+                    ? t('progress:achievements_count', {
+                        done: achieved,
+                        total: achievements.length,
+                      })
+                    : ' '}
                 </AppText>
               </View>
               <Icon name="arrow" size={18} color={theme.textMuted} />
@@ -469,6 +503,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   weekLinkTitle: { fontFamily: 'Manrope_600SemiBold', fontSize: 15 },
+  trophyIcon: { backgroundColor: '#E39A3B' },
   yearHead: {
     flexDirection: 'row',
     alignItems: 'baseline',
