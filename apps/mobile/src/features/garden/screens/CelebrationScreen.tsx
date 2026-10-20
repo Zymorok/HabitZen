@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Image, Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Image, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
   Easing,
   FadeInDown,
@@ -11,13 +11,13 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
 import Svg, { Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useAppPreferences } from '../../../core/providers/AppPreferencesProvider';
 import { resetTo } from '../../../navigation/reset-to';
+import { useHaptics } from '../../../shared/haptics';
 import { LeafConfetti } from '../../../shared/motion/LeafConfetti';
 import { useMotionPolicy } from '../../../shared/motion/useMotionPolicy';
 import { AppText } from '../../../shared/ui/AppText';
@@ -48,6 +48,7 @@ export function CelebrationScreen() {
   const { t } = useTranslation(['progress', 'common']);
   const { isDark } = useAppPreferences();
   const { animate } = useMotionPolicy();
+  const haptics = useHaptics();
   const plan = useTodayPlan();
   const streak = useStreak();
   const garden = useGarden();
@@ -61,11 +62,8 @@ export function CelebrationScreen() {
     if (claimed.current) return;
     claimed.current = true;
     claim.mutate(requestId.current);
-    if (Platform.OS !== 'web')
-      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
-        () => undefined,
-      );
-  }, [claim]);
+    haptics.success();
+  }, [claim, haptics]);
 
   const pop = useSharedValue(0.6);
   const spin = useSharedValue(0);
@@ -199,7 +197,7 @@ const styles = StyleSheet.create({
     boxShadow: '0 6px 16px rgba(229,121,62,0.16)',
     width: 200,
   },
-  chipText: { flex: 1, color: '#A65327', fontFamily: 'Manrope_600SemiBold', fontSize: 15 },
+  chipText: { flex: 1, color: '#8F4520', fontFamily: 'Manrope_600SemiBold', fontSize: 15 },
   scene: { marginTop: 'auto', justifyContent: 'flex-end', alignItems: 'center' },
   hills: { position: 'absolute', bottom: -60 },
   treeWrap: { alignItems: 'center', justifyContent: 'flex-end', transformOrigin: '50% 100%' },

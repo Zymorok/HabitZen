@@ -26,6 +26,7 @@ import { newRequestId } from '../../habits/data/habits-api';
 import { useGarden } from '../../garden/data/useGarden';
 import { planProgress, usePlanCommand, useTodayPlan } from '../data/usePlan';
 import { resetTo } from '../../../navigation/reset-to';
+import { StackTabBar } from '../../../navigation/TabBar';
 
 import hillsDay from '../../../../assets/onboarding/hills_day.webp';
 import hillsNight from '../../../../assets/onboarding/hills_night.webp';
@@ -98,7 +99,7 @@ export function DoneScreen() {
         />
       </View>
 
-      <View style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, 18) }]}>
+      <View style={[styles.bottom, { paddingBottom: 14 }]}>
         <Animated.View
           entering={FadeInDown.delay(220).duration(420)}
           style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}
@@ -142,6 +143,8 @@ export function DoneScreen() {
           </AppText>
         ) : null}
       </View>
+      {/* NOTE: Нижнее меню, как на кадре 05 макета. */}
+      <StackTabBar active="today" />
     </Animated.View>
   );
 }

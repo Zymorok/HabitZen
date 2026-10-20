@@ -66,19 +66,27 @@ export function TodayHero({
       { scale: interpolate(grow.value, [0, 1], [0.85, 1]) },
     ],
   }));
-  // NOTE: Серия выросла — огонёк подпрыгивает и меняет цвет (HZ-R12). При «Уменьшении
-  // движения» остаётся только смена цвета.
+  // NOTE: Серия выросла — огонёк делает двойной пружинный прыжок и разгорается из серого
+  // в оранжевый (HZ-R12). При «Меньше движения» остаётся только плавная смена цвета.
   const jump = useSharedValue(0);
+  const warm = useSharedValue(1);
   const previousStreak = useRef(streak);
   useEffect(() => {
     const grew = streak > previousStreak.current;
     previousStreak.current = streak;
-    if (!grew || !animate) return;
+    if (!grew) return;
+    warm.value = 0;
+    warm.value = withTiming(1, { duration: animate ? 900 : 400 });
+    if (!animate) return;
     jump.value = withSequence(
-      withTiming(1, { duration: 180, easing: Easing.out(Easing.quad) }),
-      withSpring(0, { damping: 7, stiffness: 180 }),
+      withTiming(1, { duration: 170, easing: Easing.out(Easing.quad) }),
+      withSpring(0, { damping: 12, stiffness: 260 }),
+      withTiming(0.55, { duration: 140, easing: Easing.out(Easing.quad) }),
+      withSpring(0, { damping: 9, stiffness: 220 }),
     );
-  }, [streak, animate, jump]);
+  }, [streak, animate, jump, warm]);
+  const coldStyle = useAnimatedStyle(() => ({ opacity: 1 - warm.value }));
+  const warmStyle = useAnimatedStyle(() => ({ opacity: warm.value }));
   const flameStyle = useAnimatedStyle(() => ({
     transform: [
       { translateY: -jump.value * 12 },
@@ -134,7 +142,12 @@ export function TodayHero({
       {streak > 0 ? (
         <View style={styles.streak} testID="today-streak">
           <Animated.View style={flameStyle} testID="today-flame">
-            <Icon name="flame" size={18} color={flameColor(streak)} strokeWidth={2} />
+            <Animated.View style={[styles.flameLayer, coldStyle]}>
+              <Icon name="flame" size={18} color="#9AA39A" strokeWidth={2} />
+            </Animated.View>
+            <Animated.View style={warmStyle}>
+              <Icon name="flame" size={18} color={flameColor(streak)} strokeWidth={2} />
+            </Animated.View>
           </Animated.View>
           <AppText style={styles.streakText}>{t('streak_days', { count: streak })}</AppText>
         </View>
@@ -172,8 +185,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,236,214,0.94)',
     boxShadow: '0 6px 16px rgba(229,121,62,0.16)',
   },
+  flameLayer: { position: 'absolute', left: 0, top: 0 },
   streakText: {
-    color: '#A65327',
+    color: '#8F4520',
     fontFamily: 'Manrope_600SemiBold',
     fontSize: 13,
     maxWidth: 92,

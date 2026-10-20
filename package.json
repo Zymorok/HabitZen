@@ -29,13 +29,16 @@
     "start": "npm run start --workspace @habitzen/mobile --",
     "web": "npm run web --workspace @habitzen/mobile --",
     "preview:web": "node scripts/serve-web.mjs --port 8098",
-    "export:web": "npm run export:web --workspace @habitzen/mobile --"
+    "export:web": "npm run export:web --workspace @habitzen/mobile --",
+    "screens": "node scripts/capture-screens.mjs",
+    "demo:video": "node scripts/record-demo.mjs"
   },
   "overrides": {
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.11.0",
     "@playwright/test": "1.64.1",
     "@types/node": "24.10.1",
     "eslint": "10.13.0",

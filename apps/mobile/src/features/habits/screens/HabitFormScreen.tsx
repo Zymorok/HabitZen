@@ -310,6 +310,7 @@ export function HabitFormScreen() {
                 }}
                 trackColor={{ true: theme.primary, false: theme.border }}
                 thumbColor="#FFFFFF"
+                accessibilityLabel={t('habits:reminders_toggle')}
                 testID="form-reminders"
               />
             </View>

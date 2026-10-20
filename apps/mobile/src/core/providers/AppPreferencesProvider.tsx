@@ -27,6 +27,8 @@ interface PreferencesContext {
   readonly persistenceError: boolean;
   setLanguage(language: LanguagePreference): void;
   setTheme(theme: ThemePreference): void;
+  setReducedMotion(value: boolean): void;
+  setHaptics(value: boolean): void;
 }
 const Context = createContext<PreferencesContext | null>(null);
 const PREFERENCES_KEY = 'habitzen.preferences.v1';
@@ -84,6 +86,12 @@ export function AppPreferencesProvider({ children }: { readonly children: ReactN
   const changeTheme = useCallback((nextTheme: ThemePreference) => {
     setPreferences((current) => ({ ...(current ?? defaultPreferences), theme: nextTheme }));
   }, []);
+  const changeReducedMotion = useCallback((value: boolean) => {
+    setPreferences((current) => ({ ...(current ?? defaultPreferences), reducedMotion: value }));
+  }, []);
+  const changeHaptics = useCallback((value: boolean) => {
+    setPreferences((current) => ({ ...(current ?? defaultPreferences), haptics: value }));
+  }, []);
 
   useEffect(() => {
     if (!preferences || !translator) return;
@@ -125,7 +133,7 @@ export function AppPreferencesProvider({ children }: { readonly children: ReactN
     const target = isDark ? 1 : 0;
     // NOTE: Пока настройки читаются с диска, тема ещё «системная». Первое значение после
     // загрузки ставится сразу, иначе при запуске с тёмной темой каждый раз был бы закат.
-    if (!preferences || !themeSettled.current || reducedMotion) {
+    if (!preferences || !themeSettled.current || reducedMotion || preferences.reducedMotion) {
       night.value = target;
       themeSettled.current = Boolean(preferences);
       return;
@@ -161,12 +169,19 @@ export function AppPreferencesProvider({ children }: { readonly children: ReactN
           persistenceError,
           setLanguage: changeLanguage,
           setTheme: changeTheme,
+          setReducedMotion: changeReducedMotion,
+          setHaptics: changeHaptics,
         }}
       >
         {children}
       </Context.Provider>
     </I18nextProvider>
   );
+}
+
+/** Настройки, если провайдер уже есть выше по дереву; иначе null (например, внутри самого провайдера). */
+export function useOptionalPreferences(): PreferencesContext | null {
+  return useContext(Context);
 }
 
 export function useAppPreferences(): PreferencesContext {

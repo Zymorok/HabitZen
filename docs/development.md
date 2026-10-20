@@ -37,12 +37,18 @@ Supabase CLI управляет томами PostgreSQL. В проекте не�
 
 ## Мобильное приложение
 
-apps/mobile содержит первый запуск, вход и регистрацию, экран привычек. Из корня: `npm run web -- --port 8097`, открыть `http://localhost:8097`. При запущенном приложении и Supabase: `npm run test:e2e`.
+apps/mobile содержит все 12 кадров макета (HZ-02–HZ-07). Из корня: `npm run web -- --port 8097`, открыть `http://localhost:8097`. При запущенном приложении и Supabase: `npm run test:e2e`.
 
 Итоговая веб-сборка: `npm run export:web`, затем `npm run preview:web` (http://localhost:8098). Приложение одностраничное: хостинг должен отдавать index.html на любой адрес (/habits, /auth/callback). `expo serve` этого не делает, поэтому для показа используется scripts/serve-web.mjs. Проверка сборки: `HABITZEN_BASE_URL=http://localhost:8098 npm run test:e2e`.
 
 Установлены Expo SDK 57.0.30, React Native 0.86.3, React 19.2.3, Router, NativeWind 4, Reanimated 4, Gesture Handler, i18n и AsyncStorage. Версии нативных модулей согласованы через expo install. React закреплён одинаково во всех рабочих пакетах.
 
 Совместимость: `npx expo-doctor` из apps/mobile. Android: `npm run android --workspace @habitzen/mobile -- --port 8097`, нужны SDK и JDK. Для эмулятора: `adb reverse tcp:8097 tcp:8097` и для локального Supabase `adb reverse tcp:55321 tcp:55321`. После добавления нативных модулей (HZ-03: expo-secure-store, expo-crypto) Android-приложение пересобирается: `npx expo prebuild --platform android --no-install`, затем из apps/mobile/android `gradlew assembleDebug -PreactNativeArchitectures=x86_64 -PreactNativeDevServerPort=8097`. Платформенные папки генерируются из app.json. iOS требует отдельного устройства или внешней сборки; Xcode на Windows отсутствует.
+
+После `expo prebuild` папка android пересоздаётся без `local.properties` — записать туда `sdk.dir=C:/Users/<имя>/AppData/Local/Android/Sdk`. Сборка для показа без сервера разработки (JS внутри APK): из apps/mobile/android `gradlew assembleRelease -PreactNativeArchitectures=x86_64` — файл `app/build/outputs/apk/release/app-release.apk`, подписан отладочным ключом и годится только для проверки. Release-сборка Android запрещает незашифрованный http, а локальный Supabase работает по http: для показа с локальным сервером в сгенерированной папке добавляется `app/src/release/AndroidManifest.xml` с `usesCleartextTraffic` (в Git не попадает). С настоящим сервером по https это не нужно.
+
+## Снимки и видео (HZ-07)
+
+При запущенных приложении и Supabase: `npm run screens` — все 12 кадров в светлой и тёмной теме (storage/reports/screens), затем `py resources/design/screens/make_gallery.py` — галерея и сверка с макетом в docs/screens. `npm run demo:video` записывает прохождение в браузере, `py resources/design/screens/make_preview.py` делает из него анимированное превью docs/media/habitzen-demo.webp. Оба сценария создают одноразовые аккаунты hz-…@example.com и дописывают им историю только в локальной базе разработки. Для записи видео Playwright нужен его ffmpeg: `npx playwright install ffmpeg`.
 
 [NativeWind](https://www.nativewind.dev/docs/getting-started/installation), [Expo monorepo](https://docs.expo.dev/guides/monorepos/), [локальный Supabase](https://supabase.com/docs/guides/local-development).

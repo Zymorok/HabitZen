@@ -68,6 +68,7 @@ export const MonthGrid = memo(function MonthGrid({
         {weekdays.map((label) => (
           <AppText
             key={label}
+            maxFontSizeMultiplier={1.2}
             style={[styles.weekday, { width: cell, color: theme.textMuted }]}
             numberOfLines={1}
           >
@@ -168,6 +169,7 @@ function DayCell({
         ]}
       >
         <AppText
+          maxFontSizeMultiplier={1.25}
           style={[
             styles.number,
             { color: future || !day ? theme.textMuted : shade.text },

@@ -12,12 +12,12 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
 import { darkTheme, lightTheme } from '@habitzen/design/tokens';
 import { motion } from '@habitzen/design/motion';
 import { useAppPreferences } from '../../core/providers/AppPreferencesProvider';
 import { useMotionPolicy } from '../motion/useMotionPolicy';
 import { textBlend } from '../motion/themeBlend';
+import { useHaptics } from '../haptics';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -69,6 +69,7 @@ export function Button({
   const palette = TONES[tone];
   const { night } = useAppPreferences();
   const { reducedMotion } = useMotionPolicy();
+  const haptics = useHaptics();
   const primary = variant === 'primary';
   const pressed = useSharedValue(0);
   const hovered = useSharedValue(0);
@@ -111,8 +112,7 @@ export function Button({
     rippleY.value = event.nativeEvent.locationY;
     ripple.value = 0;
     ripple.value = withTiming(1, { duration: 520, easing: Easing.out(Easing.cubic) });
-    if (Platform.OS !== 'web' && !reducedMotion)
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
+    haptics.light();
   };
   const pressOut = () => {
     pressed.value = withSpring(0, { ...motion.pressSpring, damping: 9 });

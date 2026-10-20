@@ -45,7 +45,8 @@ export function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { t, i18n } = useTranslation(['settings', 'auth', 'common']);
-  const { theme, isDark, night, preferences, setTheme } = useAppPreferences();
+  const { theme, isDark, night, preferences, setTheme, setReducedMotion, setHaptics } =
+    useAppPreferences();
   const { signOut, session } = useAuth();
   const name = useDisplayName();
   const settings = useUserSettings();
@@ -183,8 +184,35 @@ export function SettingsScreen() {
           </Pressable>
         </Animated.View>
 
+        {/* NOTE: «Удобство» — ниже макета: вибрацию и движение можно выключить (HZ-R27). */}
         <Animated.View
-          entering={FadeInDown.delay(210).duration(320)}
+          entering={FadeInDown.delay(190).duration(320)}
+          style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}
+        >
+          <Row icon="hand" label={t('settings:haptics')}>
+            <Switch
+              value={preferences.haptics}
+              onValueChange={setHaptics}
+              trackColor={{ true: theme.primary, false: theme.border }}
+              thumbColor="#FFFFFF"
+              accessibilityLabel={t('settings:haptics')}
+              testID="settings-haptics"
+            />
+          </Row>
+          <Row icon="leaf" label={t('settings:reduced_motion')} last>
+            <Switch
+              value={preferences.reducedMotion}
+              onValueChange={setReducedMotion}
+              trackColor={{ true: theme.primary, false: theme.border }}
+              thumbColor="#FFFFFF"
+              accessibilityLabel={t('settings:reduced_motion')}
+              testID="settings-reduced-motion"
+            />
+          </Row>
+        </Animated.View>
+
+        <Animated.View
+          entering={FadeInDown.delay(230).duration(320)}
           style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}
         >
           <Pressable

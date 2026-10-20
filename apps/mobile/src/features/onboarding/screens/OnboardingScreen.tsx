@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useHaptics } from '../../../shared/haptics';
 import type { LayoutChangeEvent, ScrollView } from 'react-native';
 import Animated, {
   interpolate,
@@ -16,7 +17,6 @@ import type { SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
 import { darkTheme, lightTheme } from '@habitzen/design/tokens';
 import { motion } from '@habitzen/design/motion';
@@ -59,6 +59,7 @@ export function OnboardingScreen() {
   const { t: liveCommon } = useTranslation('common');
   const { isDark, night } = useAppPreferences();
   const { time, animate, reducedMotion } = useWorldClock();
+  const haptics = useHaptics();
   const [activePage, setActivePage] = useState(0);
   const scroll = useRef<ScrollView>(null);
   const scrollX = useSharedValue(0);
@@ -116,8 +117,7 @@ export function OnboardingScreen() {
   const goTo = (page: number) => {
     setActivePage(page);
     scroll.current?.scrollTo({ x: page * width, animated: !reducedMotion });
-    if (Platform.OS !== 'web' && !reducedMotion)
-      void Haptics.selectionAsync().catch(() => undefined);
+    haptics.selection();
   };
 
   // NOTE: Земля — чуть выше кнопок: главные объекты страниц стоят прямо над ними.

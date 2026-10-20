@@ -77,7 +77,7 @@ export function RemindersScreen() {
       style={[styles.shell, shellStyle, { paddingTop: Math.max(insets.top, 12) }]}
       testID="reminders-screen"
     >
-      <View style={styles.header}>
+      <View className="flex-row items-center px-2.5">
         <IconButton
           accessibilityLabel={t('common:back')}
           onPress={() => router.back()}
@@ -90,17 +90,18 @@ export function RemindersScreen() {
         <ThemedText variant="title" style={styles.title}>
           {t('settings:reminders')}
         </ThemedText>
-        <View style={styles.headerGap} />
+        <View className="w-12" />
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
+      {/* NOTE: Статичная раскладка — классами NativeWind, цвета темы — из токенов ниже. */}
+      <ScrollView contentContainerClassName="w-full max-w-screen self-center gap-3.5 px-5 pb-10">
         <Animated.View
           entering={FadeInDown.duration(300)}
           style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}
         >
-          <View style={styles.row}>
+          <View className="min-h-row flex-row items-center gap-3.5 p-3.5">
             <Icon name="bell" size={22} color={theme.text} />
-            <View style={styles.grow}>
+            <View className="flex-1 gap-0.5">
               <AppText style={styles.rowLabel}>{t('settings:reminders')}</AppText>
               <AppText style={[styles.rowHint, { color: theme.textMuted }]}>
                 {t('settings:reminders_hint')}
@@ -124,7 +125,7 @@ export function RemindersScreen() {
             style={[styles.banner, { backgroundColor: theme.surfaceMuted }]}
             testID="reminders-blocked"
           >
-            <AppText style={styles.grow}>
+            <AppText className="flex-1">
               {canAsk ? t('settings:reminders_ask') : t('settings:reminders_permission')}
             </AppText>
             <Button
@@ -158,10 +159,10 @@ export function RemindersScreen() {
             accessibilityRole="button"
             accessibilityState={{ disabled: !enabled, expanded: timeOpen }}
             testID="reminders-time"
-            style={styles.row}
+            className="min-h-row flex-row items-center gap-3.5 p-3.5"
           >
             <Icon name="moon" size={22} color={theme.text} />
-            <View style={styles.grow}>
+            <View className="flex-1 gap-0.5">
               <AppText style={styles.rowLabel}>{t('settings:evening_reminder')}</AppText>
               <AppText style={[styles.rowHint, { color: theme.textMuted }]}>
                 {t('settings:evening_hint')}
@@ -179,7 +180,8 @@ export function RemindersScreen() {
                   onPress={() => save.mutate({ reminderTime: shiftTime(time, minutes) })}
                   accessibilityRole="button"
                   testID={`reminders-shift-${minutes}`}
-                  style={[styles.step, { borderColor: theme.border }]}
+                  className="min-h-touch flex-1 items-center justify-center rounded-chip border"
+                  style={{ borderColor: theme.border }}
                 >
                   <AppText style={styles.stepText}>
                     {minutes > 0 ? '+' : '−'}
@@ -206,17 +208,20 @@ export function RemindersScreen() {
                 onPress={() => router.push({ pathname: '/habit/new', params: { id: habit.id } })}
                 accessibilityRole="button"
                 testID="reminders-habit"
+                className="min-h-row flex-row items-center gap-3.5 p-3.5"
                 style={[
-                  styles.row,
                   index > 0
                     ? { borderTopWidth: StyleSheet.hairlineWidth, borderColor: theme.border }
                     : null,
                 ]}
               >
-                <View style={[styles.habitIcon, { backgroundColor: habitColor(habit.colorKey) }]}>
+                <View
+                  className="h-9 w-9 items-center justify-center rounded-xl"
+                  style={{ backgroundColor: habitColor(habit.colorKey) }}
+                >
                   <Icon name={habitIcon(habit.iconKey)} size={18} color="#FFFDF3" strokeWidth={2} />
                 </View>
-                <View style={styles.grow}>
+                <View className="flex-1 gap-0.5">
                   <AppText style={styles.rowLabel} numberOfLines={1}>
                     {habit.title}
                   </AppText>
@@ -240,26 +245,13 @@ export function RemindersScreen() {
 
 const styles = StyleSheet.create({
   shell: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10 },
   flip: { transform: [{ scaleX: -1 }] },
   title: { flex: 1, textAlign: 'center', fontSize: 22, lineHeight: 30 },
-  headerGap: { width: 48 },
-  content: { paddingHorizontal: 20, paddingBottom: 40, gap: 14 },
   card: { borderRadius: 22, borderWidth: 1, boxShadow: '0 8px 22px rgba(18,47,32,0.06)' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 64, padding: 14 },
-  grow: { flex: 1, gap: 2 },
   rowLabel: { fontFamily: 'Manrope_500Medium', fontSize: 16 },
   rowHint: { fontSize: 13, lineHeight: 18 },
   time: { fontFamily: 'Manrope_600SemiBold', fontSize: 16, minWidth: 52, textAlign: 'right' },
   stepper: { flexDirection: 'row', gap: 8, paddingHorizontal: 14, paddingBottom: 14 },
-  step: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: 14,
-    minHeight: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   stepText: {
     fontFamily: 'Manrope_600SemiBold',
     fontSize: 14,
@@ -268,11 +260,4 @@ const styles = StyleSheet.create({
   },
   banner: { borderRadius: 18, padding: 14, gap: 10 },
   sectionTitle: { fontFamily: 'Manrope_600SemiBold', fontSize: 16, marginTop: 6 },
-  habitIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
 });

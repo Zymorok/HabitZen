@@ -16,6 +16,8 @@ describe('Настройки до входа в аккаунт', () => {
       version: 1,
       theme: 'system',
       language: 'uk',
+      reducedMotion: false,
+      haptics: true,
     });
   });
   it('восстанавливает тёмную тему и явный язык без подмены на системный', () => {
@@ -23,6 +25,19 @@ describe('Настройки до входа в аккаунт', () => {
       version: 1,
       theme: 'dark',
       language: 'ru',
+      reducedMotion: false,
+      haptics: true,
+    });
+  });
+  it('помнит «Меньше движения» и выключенную вибрацию', () => {
+    expect(
+      parsePreferences(
+        '{"version":1,"theme":"light","language":"en","reducedMotion":true,"haptics":false}',
+      ),
+    ).toMatchObject({ reducedMotion: true, haptics: false });
+    expect(parsePreferences('{"version":1,"reducedMotion":"да","haptics":0}')).toMatchObject({
+      reducedMotion: false,
+      haptics: true,
     });
   });
 });

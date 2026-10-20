@@ -40,6 +40,7 @@ export function WeekBars({
         {bars.map((bar) => (
           <AppText
             key={bar.key}
+            maxFontSizeMultiplier={1.2}
             style={[
               styles.label,
               { color: bar.strong ? theme.text : theme.textMuted },

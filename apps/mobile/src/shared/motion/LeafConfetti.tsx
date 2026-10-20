@@ -37,7 +37,7 @@ export function LeafConfetti({
   );
   if (!animate) return null;
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+    <View style={StyleSheet.absoluteFill} pointerEvents="none" testID="leaf-confetti">
       {pieces.map((piece, index) => (
         <FallingLeaf key={index} {...piece} distance={distance} />
       ))}

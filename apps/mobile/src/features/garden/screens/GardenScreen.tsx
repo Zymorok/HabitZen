@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
-  Platform,
   ScrollView,
   StyleSheet,
   useWindowDimensions,
@@ -23,7 +22,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
 import Svg, { Circle, Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -32,6 +30,7 @@ import { darkTheme, lightTheme } from '@habitzen/design/tokens';
 import { useAuth } from '../../../core/auth/AuthProvider';
 import { useAppPreferences } from '../../../core/providers/AppPreferencesProvider';
 import { errorMessageKey } from '../../../core/supabase/errors';
+import { useHaptics } from '../../../shared/haptics';
 import { useMotionPolicy } from '../../../shared/motion/useMotionPolicy';
 import { AppText } from '../../../shared/ui/AppText';
 import { Button } from '../../../shared/ui/Button';
@@ -173,6 +172,7 @@ export function GardenScreen() {
                     resizeMode="contain"
                   />
                   <AppText
+                    maxFontSizeMultiplier={1.2}
                     style={[styles.cardLabel, { color: open ? theme.text : theme.textMuted }]}
                     numberOfLines={1}
                   >
@@ -217,6 +217,7 @@ function GardenScene({
 }) {
   const { t } = useTranslation('progress');
   const { animate } = useMotionPolicy();
+  const haptics = useHaptics();
   const [previous, setPrevious] = useState<number | null>(null);
   const grow = useSharedValue(1);
   const sway = useSharedValue(0);
@@ -238,19 +239,19 @@ function GardenScene({
         }
         if (!active || seen === null || !Number.isFinite(seen) || seen >= level) return;
         setPrevious(seen);
-        grow.value = 0.62;
-        grow.value = withDelay(350, withSpring(1, { damping: 7, stiffness: 90 }));
-        if (Platform.OS !== 'web')
-          void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
-            () => undefined,
-          );
+        // NOTE: При «Меньше движения» новое дерево просто проявляется, без пружинного роста.
+        if (animate) {
+          grow.value = 0.62;
+          grow.value = withDelay(350, withSpring(1, { damping: 7, stiffness: 90 }));
+        }
+        haptics.success();
       })();
       return () => {
         active = false;
         // NOTE: «Новый уровень!» показывается один раз — при уходе с экрана подсказка убирается.
         setPrevious(null);
       };
-    }, [userId, level, grow]),
+    }, [userId, level, grow, animate, haptics]),
   );
 
   useEffect(() => {
@@ -436,5 +437,5 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,236,214,0.95)',
     width: 190,
   },
-  perfectText: { flex: 1, color: '#A65327', fontFamily: 'Manrope_600SemiBold', fontSize: 13 },
+  perfectText: { flex: 1, color: '#8F4520', fontFamily: 'Manrope_600SemiBold', fontSize: 13 },
 });

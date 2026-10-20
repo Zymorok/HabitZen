@@ -9,7 +9,8 @@ export const lightTheme = {
   textMuted: '#626B60',
   border: '#DCE1D2',
   accent: '#F3A16A',
-  success: '#3B8056',
+  // NOTE: Чуть темнее исходного #3B8056: зелёный текст на кремовом фоне проходит контраст 4,5:1.
+  success: '#357550',
   error: '#B64747',
 } as const;
 

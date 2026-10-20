@@ -1,13 +1,13 @@
-import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, StyleSheet, View } from 'react-native';
+import { useHaptics } from '../../../shared/haptics';
 import { useRef } from 'react';
 import Animated, { FadeIn, interpolate, useAnimatedStyle } from 'react-native-reanimated';
 import type { SharedValue } from 'react-native-reanimated';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import type { SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
-import * as Haptics from 'expo-haptics';
 import { useTranslation } from 'react-i18next';
 import { useAppPreferences } from '../../../core/providers/AppPreferencesProvider';
-import { habitColor, habitIcon } from '../../../shared/habit-look';
+import { habitArt } from '../../../shared/habit-art';
 import { AppText } from '../../../shared/ui/AppText';
 import { Icon } from '../../../shared/ui/Icon';
 import type { PlanItem } from '../data/plan-api';
@@ -33,9 +33,9 @@ export function PlanRow({
   readonly onMenu: () => void;
 }) {
   const { t } = useTranslation('habits');
+  const haptics = useHaptics();
   const { theme } = useAppPreferences();
   const swipe = useRef<SwipeableMethods>(null);
-  const color = habitColor(item.colorKey);
   const done = item.status === 'completed';
   const resting = item.status === 'skipped';
   return (
@@ -48,7 +48,7 @@ export function PlanRow({
       renderRightActions={(progress) => <RestAction progress={progress} />}
       onSwipeableOpen={() => {
         swipe.current?.close();
-        if (Platform.OS !== 'web') void Haptics.selectionAsync().catch(() => undefined);
+        haptics.selection();
         onSkip();
       }}
     >
@@ -73,9 +73,13 @@ export function PlanRow({
           !last ? styles.divider : null,
         ]}
       >
-        <View style={[styles.badge, { backgroundColor: color + '1F' }]}>
-          <Icon name={habitIcon(item.iconKey)} size={19} color={color} strokeWidth={1.9} />
-        </View>
+        {/* NOTE: Цветной значок без подложки — как в списке на кадре 02. */}
+        <Image
+          source={habitArt(item.iconKey)}
+          style={[styles.art, resting ? styles.artResting : null]}
+          resizeMode="contain"
+          accessible={false}
+        />
         <AppText
           numberOfLines={1}
           style={[
@@ -138,13 +142,8 @@ const styles = StyleSheet.create({
     minHeight: 56,
   },
   divider: { borderBottomWidth: StyleSheet.hairlineWidth },
-  badge: {
-    width: 34,
-    height: 34,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  art: { width: 30, height: 30 },
+  artResting: { opacity: 0.45 },
   title: { flex: 1, fontFamily: 'Manrope_500Medium', fontSize: 15, lineHeight: 21 },
   check: {
     width: 24,

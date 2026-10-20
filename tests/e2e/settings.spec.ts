@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
-import { signUp, uniqueEmail } from './helpers';
+import type { Page } from '@playwright/test';
+import { addHabit, signUp, uniqueEmail } from './helpers';
 
 /** HZ-06: настройки (кадр 12) и напоминания на настоящем локальном Supabase. */
 
@@ -62,4 +63,45 @@ test('напоминание у привычки включает общие н�
   await expect(page.getByTestId('settings-reminders-value')).toHaveText('21:00');
   await page.getByTestId('settings-reminders').click();
   await expect(page.getByTestId('reminders-habit')).toContainText('Растяжка');
+});
+
+test.describe('«Меньше движения» в приложении', () => {
+  // NOTE: Системная настройка браузера — «движение можно»: проверяем именно выключатель приложения.
+  test.use({ reducedMotion: 'no-preference' });
+
+  /** Удержание до экрана «Отлично!» — без перехода дальше, чтобы посмотреть на сам экран. */
+  async function holdHabit(page: Page, title: string) {
+    await page.getByTestId('plan-row').filter({ hasText: title }).click();
+    const box = await page.getByTestId('hold-target').boundingBox();
+    if (!box) throw new Error('Кольцо удержания не найдено');
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.waitForTimeout(1500);
+    await page.mouse.up();
+    await expect(page.getByTestId('done-screen')).toBeVisible();
+  }
+
+  test('выключает падающие листья и сохраняется на устройстве', async ({ page }) => {
+    await signUp(page, 'Движение', uniqueEmail('motion'));
+    await addHabit(page, 'Вода');
+    await addHabit(page, 'Чай');
+    // NOTE: Пока выключатель не тронут, листья падают.
+    await holdHabit(page, 'Вода');
+    await expect(page.getByTestId('leaf-confetti')).toHaveCount(1);
+    await page.getByTestId('done-continue').click();
+    await expect(page.getByTestId('today-screen')).toBeVisible();
+
+    await page.getByTestId('tab-profile').click();
+    const motion = page.getByRole('switch', { name: 'Меньше движения' });
+    await expect(motion).not.toBeChecked();
+    await motion.click();
+    await expect(motion).toBeChecked();
+    await page.reload();
+    await page.getByTestId('tab-profile').click();
+    await expect(page.getByRole('switch', { name: 'Меньше движения' })).toBeChecked();
+
+    await page.getByTestId('tab-today').click();
+    await holdHabit(page, 'Чай');
+    await expect(page.getByTestId('leaf-confetti')).toHaveCount(0);
+  });
 });

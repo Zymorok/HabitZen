@@ -6,11 +6,17 @@ export interface AppPreferences {
   readonly version: 1;
   readonly theme: ThemePreference;
   readonly language: LanguagePreference;
+  /** «Меньше движения» в приложении — вдобавок к системной настройке телефона. */
+  readonly reducedMotion: boolean;
+  /** Вибрация при удержании, нажатиях и наградах. */
+  readonly haptics: boolean;
 }
 export const defaultPreferences: AppPreferences = {
   version: 1,
   theme: 'system',
   language: 'system',
+  reducedMotion: false,
+  haptics: true,
 };
 
 export function parsePreferences(source: string | null): AppPreferences {
@@ -25,6 +31,9 @@ export function parsePreferences(source: string | null): AppPreferences {
       version: 1,
       theme: theme === 'light' || theme === 'dark' ? theme : 'system',
       language: parseLanguagePreference('language' in value ? value.language : undefined),
+      // NOTE: Сохранённые до HZ-07 настройки не знают этих полей — берутся значения по умолчанию.
+      reducedMotion: 'reducedMotion' in value && value.reducedMotion === true,
+      haptics: !('haptics' in value) || value.haptics !== false,
     };
   } catch {
     // NOTE: Повреждённая настройка оформления не должна мешать открыть приложение.

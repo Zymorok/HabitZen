@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { AccessibilityInfo, AppState } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
+import { useOptionalPreferences } from '../../core/providers/AppPreferencesProvider';
 
 /**
  * Можно ли сейчас показывать непрерывное движение.
- * NOTE: Учитывает системное «Уменьшение движения» и сворачивание приложения:
- * в фоне бесконечные циклы не нужны и только тратят батарею.
+ * NOTE: Учитывает системное «Уменьшение движения», выключатель «Меньше движения» в настройках
+ * приложения и сворачивание: в фоне бесконечные циклы не нужны и только тратят батарею.
  */
 export function useMotionPolicy() {
   const initialReducedMotion = useReducedMotion();
@@ -21,5 +22,7 @@ export function useMotionPolicy() {
     );
     return () => subscription.remove();
   }, []);
-  return { reducedMotion, foreground, animate: foreground && !reducedMotion };
+  const preferences = useOptionalPreferences();
+  const reduced = reducedMotion || Boolean(preferences?.preferences.reducedMotion);
+  return { reducedMotion: reduced, foreground, animate: foreground && !reduced };
 }

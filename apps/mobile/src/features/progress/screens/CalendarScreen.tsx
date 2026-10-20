@@ -115,8 +115,11 @@ export function CalendarScreen() {
   const onSelect = useCallback((date: LocalDate) => setPicked(date), []);
 
   const share = dayShare(selectedDay);
-  const dayStatus =
-    selected > today
+  // NOTE: Пока данные месяца не пришли, не говорим «истории нет» и не показываем нули.
+  const loading = calendar.isPending;
+  const dayStatus = loading
+    ? t('common:loading')
+    : selected > today
       ? t('progress:day_future')
       : !selectedDay
         ? t('progress:day_empty')
@@ -227,13 +230,13 @@ export function CalendarScreen() {
 
             <View style={[styles.stats, { borderColor: theme.border }]} testID="progress-stats">
               <Stat
-                value={String(streak.data?.current ?? 0)}
+                value={streak.isPending ? '—' : String(streak.data?.current ?? 0)}
                 caption={t('progress:streak_caption', { count: streak.data?.current ?? 0 })}
                 testID="stat-streak"
               />
               <View style={[styles.divider, { backgroundColor: theme.border }]} />
               <Stat
-                value={String(completedInMonth)}
+                value={loading ? '—' : String(completedInMonth)}
                 caption={t('progress:completions_caption', { count: completedInMonth })}
                 testID="stat-completed"
               />

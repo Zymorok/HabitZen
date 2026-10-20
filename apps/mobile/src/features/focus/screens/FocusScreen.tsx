@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   AppState,
   Image,
-  Platform,
   Pressable,
   StyleSheet,
   useWindowDimensions,
@@ -20,7 +19,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
-import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import {
@@ -36,6 +34,7 @@ import { useAppPreferences } from '../../../core/providers/AppPreferencesProvide
 import { errorMessageKey } from '../../../core/supabase/errors';
 import { focusAudio } from '../../../platform/audio/focus-audio';
 import { cancelFocusAlert, scheduleFocusAlert } from '../../../platform/focus-alert/focus-alert';
+import { useHaptics } from '../../../shared/haptics';
 import { useMotionPolicy } from '../../../shared/motion/useMotionPolicy';
 import { AppText } from '../../../shared/ui/AppText';
 import { Button } from '../../../shared/ui/Button';
@@ -87,6 +86,7 @@ export function FocusScreen() {
   const { t } = useTranslation(['focus', 'errors', 'common', 'notifications']);
   const { theme, night, isDark } = useAppPreferences();
   const { foreground } = useMotionPolicy();
+  const haptics = useHaptics();
   const focus = useFocusState();
   const command = useFocusCommand();
   const sound = useFocusSound();
@@ -130,15 +130,12 @@ export function FocusScreen() {
     if (!running || left > 0 || !session) return;
     if (finishedFor.current !== session.id) {
       finishedFor.current = session.id;
-      if (Platform.OS !== 'web')
-        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
-          () => undefined,
-        );
+      haptics.success();
     }
     void refetch();
     const retry = setInterval(() => void refetch(), 1500);
     return () => clearInterval(retry);
-  }, [running, left, session, refetch]);
+  }, [running, left, session, refetch, haptics]);
 
   // NOTE: Звук играет только во время идущего фокуса и пока приложение на экране.
   const playing = running && !isBreak && left > 0 && foreground && soundChoice !== 'none';
@@ -353,12 +350,14 @@ export function FocusScreen() {
             />
             <AppText
               style={[styles.time, { color: timeColor, fontSize: ringSize > 260 ? 62 : 52 }]}
+              maxFontSizeMultiplier={1.1}
               testID="focus-time"
             >
               {clockText(left)}
             </AppText>
             <AppText
               style={[styles.caption, { color: isBreak ? timeColor : theme.textMuted }]}
+              maxFontSizeMultiplier={1.3}
               testID="focus-caption"
             >
               {isBreak
@@ -432,6 +431,8 @@ export function FocusScreen() {
             <View
               style={styles.dots}
               accessible
+              // NOTE: Точки — картинка с подписью для читалки экрана: «Сегодня завершено 2 занятия».
+              accessibilityRole="image"
               accessibilityLabel={t('focus:sessions_today', {
                 count: snapshot?.completedToday ?? 0,
               })}
@@ -492,6 +493,7 @@ function RoundButton({
   readonly onPress: () => void;
   readonly busy: boolean;
 }) {
+  const haptics = useHaptics();
   const pressed = useSharedValue(0);
   const style = useAnimatedStyle(() => ({
     transform: [{ scale: 1 - pressed.value * 0.07 }],
@@ -502,8 +504,7 @@ function RoundButton({
         onPress={busy ? undefined : onPress}
         onPressIn={() => {
           pressed.value = withSpring(1, motion.pressSpring);
-          if (Platform.OS !== 'web')
-            void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
+          haptics.medium();
         }}
         onPressOut={() => {
           pressed.value = withSpring(0, { ...motion.pressSpring, damping: 9 });

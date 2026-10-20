@@ -1,3 +1,4 @@
+import '../core/i18n/intl-polyfills';
 import '../../global.css';
 import { useFonts } from 'expo-font';
 import { Lora_600SemiBold } from '@expo-google-fonts/lora/600SemiBold';

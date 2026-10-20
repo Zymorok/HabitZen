@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet } from 'react-native';
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { useEffect } from 'react';
 import Animated, {
   interpolateColor,
@@ -9,6 +9,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'expo-router';
 import type { Tabs } from 'expo-router';
 import { darkTheme, lightTheme } from '@habitzen/design/tokens';
 import { motion } from '@habitzen/design/motion';
@@ -25,8 +26,8 @@ const TABS: Readonly<Record<string, { icon: IconName; label: string }>> = {
   profile: { icon: 'user', label: 'profile' },
 };
 
-/** Нижнее меню как в макете: значок и подпись, выбранный пункт — зелёный и чуть крупнее. */
-export function TabBar({ state, navigation }: TabBarProps) {
+/** Подложка нижнего меню: цвет плавно меняется вместе с темой. */
+function Bar({ children }: { readonly children: ReactNode }) {
   const insets = useSafeAreaInsets();
   const { night } = useAppPreferences();
   const barStyle = useAnimatedStyle(() => ({
@@ -38,6 +39,41 @@ export function TabBar({ state, navigation }: TabBarProps) {
       style={[styles.bar, { paddingBottom: Math.max(insets.bottom, 8) }, barStyle]}
       accessibilityRole="tablist"
     >
+      {children}
+    </Animated.View>
+  );
+}
+
+/**
+ * Нижнее меню на экранах поверх вкладок — удержание и «Отлично!» (кадры 04–05), как в макете.
+ * NOTE: Нажатие закрывает экран и переходит на выбранную вкладку.
+ */
+export function StackTabBar({ active }: { readonly active: keyof typeof TABS }) {
+  const router = useRouter();
+  return (
+    <Bar>
+      {Object.entries(TABS).map(([name, tab]) => (
+        <TabButton
+          key={name}
+          name={name}
+          icon={tab.icon}
+          labelKey={tab.label}
+          focused={name === active}
+          testPrefix="stack-tab"
+          onPress={() => {
+            if (router.canDismiss()) router.dismissAll();
+            router.navigate(`/${name}` as '/today');
+          }}
+        />
+      ))}
+    </Bar>
+  );
+}
+
+/** Нижнее меню как в макете: значок и подпись, выбранный пункт — зелёный и чуть крупнее. */
+export function TabBar({ state, navigation }: TabBarProps) {
+  return (
+    <Bar>
       {state.routes.map((route, index) => {
         const tab = TABS[route.name];
         if (!tab) return null;
@@ -59,7 +95,7 @@ export function TabBar({ state, navigation }: TabBarProps) {
           />
         );
       })}
-    </Animated.View>
+    </Bar>
   );
 }
 
@@ -69,12 +105,14 @@ function TabButton({
   labelKey,
   focused,
   onPress,
+  testPrefix = 'tab',
 }: {
   readonly name: string;
   readonly icon: IconName;
   readonly labelKey: string;
   readonly focused: boolean;
   readonly onPress: () => void;
+  readonly testPrefix?: string;
 }) {
   const { t } = useTranslation('common');
   const { theme } = useAppPreferences();
@@ -96,13 +134,14 @@ function TabButton({
       accessibilityRole="tab"
       aria-selected={focused}
       accessibilityLabel={t(labelKey)}
-      testID={`tab-${name}`}
+      testID={`${testPrefix}-${name}`}
       style={styles.tab}
     >
       <Animated.View style={iconStyle}>
         <Icon name={icon} size={22} color={color} strokeWidth={focused ? 2 : 1.7} />
       </Animated.View>
       <Animated.Text
+        maxFontSizeMultiplier={1.2}
         style={[
           styles.label,
           { color, fontFamily: focused ? 'Manrope_600SemiBold' : 'Manrope_500Medium' },

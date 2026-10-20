@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: 'rgba(255,236,214,0.95)',
   },
-  chipText: { color: '#A65327', fontFamily: 'Manrope_600SemiBold', fontSize: 13 },
+  chipText: { color: '#8F4520', fontFamily: 'Manrope_600SemiBold', fontSize: 13 },
   segmented: { flexDirection: 'row', borderRadius: 18, padding: 4 },
   pill: {
     position: 'absolute',

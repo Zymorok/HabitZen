@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Image, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, StyleSheet, View } from 'react-native';
 import type { ImageSourcePropType } from 'react-native';
 import Animated, {
   cancelAnimation,
@@ -16,7 +16,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
-import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -24,6 +23,7 @@ import { darkTheme, lightTheme } from '@habitzen/design/tokens';
 import { motion } from '@habitzen/design/motion';
 import { useAppPreferences } from '../../../core/providers/AppPreferencesProvider';
 import { errorMessageKey } from '../../../core/supabase/errors';
+import { useHaptics } from '../../../shared/haptics';
 import { useMotionPolicy } from '../../../shared/motion/useMotionPolicy';
 import { habitColor, habitIcon } from '../../../shared/habit-look';
 import { AppText } from '../../../shared/ui/AppText';
@@ -34,6 +34,7 @@ import { ThemedText } from '../../../shared/ui/ThemedText';
 import { newRequestId } from '../../habits/data/habits-api';
 import { usePlanCommand, useTodayPlan } from '../data/usePlan';
 import { RowMenu } from '../../../shared/ui/RowMenu';
+import { StackTabBar } from '../../../navigation/TabBar';
 
 import leafGreen from '../../../../assets/onboarding/leaf_green.webp';
 import leafOrange from '../../../../assets/onboarding/leaf_orange.webp';
@@ -55,7 +56,7 @@ export function HoldScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation(['habits', 'errors', 'common', 'progress']);
   const { theme, night } = useAppPreferences();
-  const { reducedMotion } = useMotionPolicy();
+  const haptics = useHaptics();
   const plan = useTodayPlan();
   const command = usePlanCommand();
   const item = plan.data?.find((entry) => entry.itemId === itemId);
@@ -79,10 +80,7 @@ export function HoldScreen() {
     if (!item) return;
     setHint('saving');
     setError(null);
-    if (Platform.OS !== 'web')
-      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
-        () => undefined,
-      );
+    haptics.success();
     command.mutate(
       { command: 'complete', item, requestId: requestId.current },
       {
@@ -123,11 +121,8 @@ export function HoldScreen() {
     );
     // NOTE: Лёгкая вибрация каждые 200 мс — человек чувствует, что жест идёт.
     stopTicker();
-    if (Platform.OS !== 'web' && !reducedMotion) {
-      ticker.current = setInterval(
-        () => void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined),
-        motion.holdHapticIntervalMs,
-      );
+    if (haptics.enabled) {
+      ticker.current = setInterval(() => haptics.light(), motion.holdHapticIntervalMs);
     }
   };
   const pressOut = () => {
@@ -325,6 +320,8 @@ export function HoldScreen() {
             : []),
         ]}
       />
+      {/* NOTE: Нижнее меню, как на кадре 04 макета. */}
+      <StackTabBar active="today" />
     </Animated.View>
   );
 }
