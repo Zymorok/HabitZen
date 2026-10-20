@@ -15,6 +15,9 @@ export type HabitDayStatus = 'completed' | 'skipped' | 'missed' | 'pending' | 'r
 export interface HabitDay {
   readonly date: string;
   readonly status: HabitDayStatus;
+  /** Сколько набрано из цели дня: «5 из 8 стаканов» (HZ-09). У «просто отметить» цель 1. */
+  readonly progress: number;
+  readonly target: number;
 }
 
 function client() {
@@ -45,9 +48,18 @@ export async function fetchCalendarDays(from: string, to: string): Promise<Calen
 export async function fetchHabitDays(habitId: string, days: number): Promise<HabitDay[]> {
   const { data, error } = await client().rpc('habit_days', { p_habit_id: habitId, p_days: days });
   if (error) throw error;
-  return ((data ?? []) as { local_date: string; status: HabitDayStatus }[]).map((row) => ({
+  return (
+    (data ?? []) as {
+      local_date: string;
+      status: HabitDayStatus;
+      progress: number | null;
+      target: number | null;
+    }[]
+  ).map((row) => ({
     date: row.local_date,
     status: row.status,
+    progress: row.progress ?? 0,
+    target: row.target ?? 1,
   }));
 }
 

@@ -114,5 +114,15 @@
   "unit_of_steps_other": "steps",
   "unit_of_km_one": "km",
   "unit_of_km_other": "km",
-  "focus_for": "Focus on this habit"
+  "focus_for": "Focus on this habit",
+  "my_habits_empty": "No habits yet — add the first one on the home screen.",
+  "order_hint": "Drag ≡ to change the order. Your daily plan and weekly review follow it too.",
+  "move_up": "Move up",
+  "move_down": "Move down",
+  "drag_habit": "Drag “{{title}}”",
+  "archive_title": "Archive",
+  "archived_on": "Archived on {{date}}",
+  "restore": "Restore",
+  "habits_count_one": "{{count}} habit",
+  "habits_count_other": "{{count}} habits"
 }

@@ -163,3 +163,13 @@ export function yearGrid(
   );
   return { columns, months, activeDays };
 }
+
+/**
+ * Доля цели за день у одной привычки (HZ-09): выполнено — 1, «5 из 8» — 0,625, иначе 0.
+ * NOTE: Частичный день не считается выполненным для серии и «5/7» — только показывается.
+ */
+export function habitDayShare(day: HabitDay): number {
+  if (day.status === 'completed') return 1;
+  if (day.status === 'rest' || day.progress <= 0 || day.target <= 0) return 0;
+  return Math.min(0.99, day.progress / day.target);
+}

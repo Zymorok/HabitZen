@@ -29,7 +29,7 @@ import { Icon } from '../../../shared/ui/Icon';
 import type { IconName } from '../../../shared/ui/Icon';
 import { TextField } from '../../../shared/ui/TextField';
 import { ThemedText } from '../../../shared/ui/ThemedText';
-import { useDisplayName } from '../../habits/data/useHabits';
+import { useActiveHabits, useDisplayName } from '../../habits/data/useHabits';
 import { useSaveDisplayName, useSaveSettings, useUserSettings } from '../data/useSettings';
 import { ThemePreview } from '../components/ThemePreview';
 import { AccentPicker } from '../components/AccentPicker';
@@ -44,11 +44,12 @@ export function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { t, i18n } = useTranslation(['settings', 'auth', 'common']);
+  const { t, i18n } = useTranslation(['settings', 'auth', 'common', 'habits']);
   const { theme, isDark, night, palette, preferences, setTheme, setReducedMotion, setHaptics } =
     useAppPreferences();
   const { signOut, session } = useAuth();
   const name = useDisplayName();
+  const habits = useActiveHabits();
   const settings = useUserSettings();
   const saveSettings = useSaveSettings();
   const [editing, setEditing] = useState(false);
@@ -110,6 +111,19 @@ export function SettingsScreen() {
           entering={FadeInDown.delay(70).duration(320)}
           style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}
         >
+          {/* NOTE: «Мои привычки» (HZ-09) — порядок и архив, первой строкой карточки. */}
+          <Pressable
+            onPress={() => router.push('/habits')}
+            accessibilityRole="button"
+            testID="settings-habits"
+          >
+            <Row icon="leaf" label={t('settings:my_habits')}>
+              <AppText style={{ color: theme.textMuted }} testID="settings-habits-value">
+                {habits.data ? t('habits:habits_count', { count: habits.data.length }) : ''}
+              </AppText>
+              <Icon name="arrow" size={16} color={theme.textMuted} />
+            </Row>
+          </Pressable>
           <Pressable
             onPress={() => router.push('/reminders')}
             accessibilityRole="button"

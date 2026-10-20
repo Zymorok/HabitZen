@@ -48,6 +48,15 @@ export interface Palette {
   readonly glow: string;
   readonly ripple: string;
   readonly hover: string;
+  /** Кольцо таймера фокуса (HZ-09): дорожка, градиент и свет за ним; перерыв — свой, персиковый. */
+  readonly ring: { readonly day: RingColors; readonly night: RingColors };
+}
+
+export interface RingColors {
+  readonly track: string;
+  readonly from: string;
+  readonly to: string;
+  readonly glow: string;
 }
 
 // NOTE: «Выполнено» (success) во всех темах зелёное — это смысл, а не украшение.
@@ -64,6 +73,10 @@ export const palettes: { readonly [K in AccentKey]: Palette } = {
     glow: '0 8px 18px rgba(29,70,48,0.34)',
     ripple: '#7FA978',
     hover: 'rgba(169,199,163,0.12)',
+    ring: {
+      day: { track: '#D3E3CB', from: '#5E9B6C', to: '#2D6249', glow: '#FFFDF5' },
+      night: { track: '#2E4A3B', from: '#A7CEA2', to: '#6FA478', glow: '#1D3229' },
+    },
   },
   sunset: {
     light: {
@@ -98,6 +111,10 @@ export const palettes: { readonly [K in AccentKey]: Palette } = {
     glow: '0 8px 18px rgba(140,60,30,0.32)',
     ripple: '#E8A985',
     hover: 'rgba(237,184,152,0.14)',
+    ring: {
+      day: { track: '#F4DCCB', from: '#D07049', to: '#A84B29', glow: '#FFFAF3' },
+      night: { track: '#4A3326', from: '#F2B48C', to: '#D98A5E', glow: '#2B1F18' },
+    },
   },
   ocean: {
     light: {
@@ -132,6 +149,10 @@ export const palettes: { readonly [K in AccentKey]: Palette } = {
     glow: '0 8px 18px rgba(20,70,95,0.32)',
     ripple: '#7FB0C6',
     hover: 'rgba(158,195,211,0.14)',
+    ring: {
+      day: { track: '#CFE2EA', from: '#3B7F9E', to: '#245E78', glow: '#FAFDFE' },
+      night: { track: '#2B4A57', from: '#9CCBE0', to: '#5E97B0', glow: '#14262E' },
+    },
   },
   lavender: {
     light: {
@@ -165,6 +186,10 @@ export const palettes: { readonly [K in AccentKey]: Palette } = {
     glow: '0 8px 18px rgba(70,50,120,0.32)',
     ripple: '#A897D2',
     hover: 'rgba(195,181,223,0.14)',
+    ring: {
+      day: { track: '#E0D7EF', from: '#7B66AE', to: '#5E4A8B', glow: '#FDFBFF' },
+      night: { track: '#3D3452', from: '#C9B8EE', to: '#9783C7', glow: '#221C2E' },
+    },
   },
 };
 

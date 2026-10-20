@@ -26,6 +26,20 @@ export interface Habit {
   readonly frequency: Frequency;
   readonly perWeek: number | null;
   readonly intervalDays: number | null;
+  /** С какого дня действует расписание: от него считается «каждый N-й день». */
+  readonly scheduleFrom: string;
+  /** Место в списке, которое выбрал человек (HZ-09). */
+  readonly sortOrder: number;
+}
+
+/** Привычка в архиве: её можно вернуть (HZ-09). */
+export interface ArchivedHabit {
+  readonly id: string;
+  readonly title: string;
+  readonly iconKey: string;
+  readonly colorKey: HabitColor;
+  readonly revision: number;
+  readonly archivedAt: string;
 }
 
 export interface HabitDraft {
@@ -68,6 +82,8 @@ interface HabitRow {
   frequency: Frequency;
   per_week: number | null;
   interval_days: number | null;
+  schedule_from: string;
+  sort_order: number;
 }
 
 export async function fetchActiveHabits(): Promise<Habit[]> {
@@ -89,7 +105,49 @@ export async function fetchActiveHabits(): Promise<Habit[]> {
     frequency: row.frequency,
     perWeek: row.per_week,
     intervalDays: row.interval_days,
+    scheduleFrom: row.schedule_from,
+    sortOrder: row.sort_order,
   }));
+}
+
+export async function fetchArchivedHabits(): Promise<ArchivedHabit[]> {
+  const { data, error } = await client().rpc('list_archived_habits');
+  if (error) throw error;
+  return (
+    (data ?? []) as {
+      id: string;
+      title: string;
+      icon_key: string;
+      color_key: HabitColor;
+      revision: number;
+      archived_at: string;
+    }[]
+  ).map((row) => ({
+    id: row.id,
+    title: row.title,
+    iconKey: row.icon_key,
+    colorKey: row.color_key,
+    revision: row.revision,
+    archivedAt: row.archived_at,
+  }));
+}
+
+/** Новый порядок — полный список активных привычек; устаревший сервер отклонит (PT409). */
+export async function reorderHabits(ids: readonly string[], requestId: string): Promise<void> {
+  const { error } = await client().rpc('reorder_habits', {
+    p_request_id: requestId,
+    p_habit_ids: ids,
+  });
+  if (error) throw error;
+}
+
+export async function restoreHabit(habit: ArchivedHabit, requestId: string): Promise<void> {
+  const { error } = await client().rpc('restore_habit', {
+    p_request_id: requestId,
+    p_habit_id: habit.id,
+    p_expected_revision: habit.revision,
+  });
+  if (error) throw error;
 }
 
 function draftParams(habit: HabitDraft) {

@@ -66,15 +66,10 @@ const PANEL_BREAK = 150;
 const ARCH = 34;
 const BIG_BUTTON = 84;
 
-const RINGS: Readonly<Record<'focus' | 'break', { day: RingPalette; night: RingPalette }>> = {
-  focus: {
-    day: { track: '#D3E3CB', from: '#5E9B6C', to: '#2D6249', glow: '#FFFDF5' },
-    night: { track: '#2E4A3B', from: '#A7CEA2', to: '#6FA478', glow: '#1D3229' },
-  },
-  break: {
-    day: { track: '#F8DCC6', from: '#F6B184', to: '#E57F4C', glow: '#FFF6EC' },
-    night: { track: '#4A3428', from: '#F6C29C', to: '#E9976A', glow: '#2E231D' },
-  },
+// NOTE: Кольцо фокуса — в цвете темы (HZ-09, токены palette.ring); перерыв всегда персиковый.
+const BREAK_RING: { day: RingPalette; night: RingPalette } = {
+  day: { track: '#F8DCC6', from: '#F6B184', to: '#E57F4C', glow: '#FFF6EC' },
+  night: { track: '#4A3428', from: '#F6C29C', to: '#E9976A', glow: '#2E231D' },
 };
 
 /**
@@ -228,7 +223,7 @@ export function FocusScreen() {
   );
   // NOTE: Пейзаж заканчивается под дугой панели — ниже его закрывает кремовая панель.
   const sceneHeight = Math.max(height - tabBar - panel + 4, ringSize + header);
-  const ringPalette = RINGS[timer.phase][isDark ? 'night' : 'day'];
+  const ringPalette = (isBreak ? BREAK_RING : palette.ring)[isDark ? 'night' : 'day'];
   const active = session !== null && (session.status === 'running' || session.status === 'paused');
   const filledDots = Math.min(DOTS, (snapshot?.completedToday ?? 0) + (active && !isBreak ? 1 : 0));
   const soundLabel = t(soundChoice === 'none' ? 'focus:sound_none' : `focus:${soundChoice}`);
@@ -400,8 +395,8 @@ export function FocusScreen() {
             <Icon
               name={isBreak ? 'leaf' : 'sprout'}
               size={isBreak ? 36 : 44}
-              color={isBreak ? '#EE9563' : isDark ? '#A7CEA2' : '#3E7D50'}
-              fill={isBreak ? '#F6B184' : isDark ? '#6FA478' : '#5E9B6C'}
+              color={isBreak ? '#EE9563' : isDark ? ringPalette.from : ringPalette.to}
+              fill={isBreak ? '#F6B184' : isDark ? ringPalette.to : ringPalette.from}
               strokeWidth={1.6}
             />
             <AppText
@@ -552,6 +547,7 @@ function RoundButton({
   readonly busy: boolean;
 }) {
   const haptics = useHaptics();
+  const { palette } = useAppPreferences();
   const pressed = useSharedValue(0);
   const style = useAnimatedStyle(() => ({
     transform: [{ scale: 1 - pressed.value * 0.07 }],
@@ -573,8 +569,9 @@ function RoundButton({
         testID="focus-main"
         style={styles.roundTouch}
       >
+        {/* NOTE: Кнопка в цвете темы (HZ-09); тёмный дневной градиент — белый значок читается и ночью. */}
         <LinearGradient
-          colors={['#3F7B53', '#24533C']}
+          colors={[palette.gradient.day[0], palette.gradient.day[1]]}
           start={{ x: 0.2, y: 0 }}
           end={{ x: 0.8, y: 1 }}
           style={StyleSheet.absoluteFill}

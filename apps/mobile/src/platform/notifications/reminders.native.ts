@@ -43,6 +43,23 @@ export async function applyReminders(
     let count = 0;
     for (const reminder of plan) {
       const content = texts.text(reminder);
+      if (reminder.dates) {
+        // NOTE: Разовые напоминания гибкого графика — в часах телефона на нужную дату (HZ-09).
+        for (const date of reminder.dates) {
+          const [year = 0, month = 1, day = 1] = date.split('-').map(Number);
+          await Notifications.scheduleNotificationAsync({
+            identifier: `${PREFIX}${reminder.id}-${date}`,
+            content,
+            trigger: {
+              type: Notifications.SchedulableTriggerInputTypes.DATE,
+              date: new Date(year, month - 1, day, reminder.hour, reminder.minute),
+              channelId: CHANNEL,
+            },
+          });
+          count += 1;
+        }
+        continue;
+      }
       if (reminder.weekdays === null) {
         await Notifications.scheduleNotificationAsync({
           identifier: `${PREFIX}${reminder.id}-daily`,

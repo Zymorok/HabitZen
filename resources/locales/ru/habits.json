@@ -140,5 +140,17 @@
   "unit_of_km_few": "км",
   "unit_of_km_many": "км",
   "unit_of_km_other": "км",
-  "focus_for": "Фокус для привычки"
+  "focus_for": "Фокус для привычки",
+  "my_habits_empty": "Привычек пока нет — добавь первую на главном экране.",
+  "order_hint": "Потяни за ≡, чтобы поменять порядок. В нём же привычки идут в плане дня и в итогах недели.",
+  "move_up": "Выше",
+  "move_down": "Ниже",
+  "drag_habit": "Перетащить «{{title}}»",
+  "archive_title": "Архив",
+  "archived_on": "В архиве с {{date}}",
+  "restore": "Вернуть",
+  "habits_count_one": "{{count}} привычка",
+  "habits_count_few": "{{count}} привычки",
+  "habits_count_many": "{{count}} привычек",
+  "habits_count_other": "{{count}} привычки"
 }

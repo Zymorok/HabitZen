@@ -140,5 +140,17 @@
   "unit_of_km_few": "км",
   "unit_of_km_many": "км",
   "unit_of_km_other": "км",
-  "focus_for": "Фокус для звички"
+  "focus_for": "Фокус для звички",
+  "my_habits_empty": "Звичок поки немає — додай першу на головному екрані.",
+  "order_hint": "Потягни за ≡, щоб змінити порядок. У ньому ж звички йдуть у плані дня та в підсумках тижня.",
+  "move_up": "Вище",
+  "move_down": "Нижче",
+  "drag_habit": "Перетягнути «{{title}}»",
+  "archive_title": "Архів",
+  "archived_on": "В архіві з {{date}}",
+  "restore": "Повернути",
+  "habits_count_one": "{{count}} звичка",
+  "habits_count_few": "{{count}} звички",
+  "habits_count_many": "{{count}} звичок",
+  "habits_count_other": "{{count}} звички"
 }

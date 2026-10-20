@@ -245,4 +245,9 @@ test('цветовая тема перекрашивает приложение 
   await page.reload();
   await page.getByTestId('tab-today').click();
   expect(await color()).toBe('rgb(36, 94, 120)');
+
+  // NOTE: HZ-09 — кольцо фокуса тоже в цвете темы.
+  await page.getByTestId('tab-focus').click();
+  await expect(page.getByTestId('focus-ring')).toBeVisible();
+  await page.screenshot({ path: 'storage/reports/e2e/hz09-focus-ocean.png' });
 });

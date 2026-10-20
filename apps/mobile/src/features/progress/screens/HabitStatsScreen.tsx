@@ -31,7 +31,10 @@ import { useActiveHabits, useArchiveHabit } from '../../habits/data/useHabits';
 import type { HabitDay, HabitDayStatus } from '../data/progress-api';
 import { useHabitDays } from '../data/useProgress';
 import { WeekBars } from '../components/WeekBars';
-import { habitStreak, habitWeek } from '../stats';
+import { habitDayShare, habitStreak, habitWeek } from '../stats';
+import Svg, { Circle } from 'react-native-svg';
+import { goalOfText } from '../../habits/goal';
+import type { GoalUnit } from '../../habits/goal';
 
 const RECENT = 5;
 const HISTORY = 60;
@@ -168,12 +171,13 @@ export function HabitStatsScreen() {
                 testID="habit-week-bars"
                 bars={week.marks.map((mark, index) => ({
                   key: mark.date,
+                  // NOTE: Частично набранный день (HZ-09) — столбик по доле цели, не ниже пропуска.
                   value:
                     mark.status === 'completed'
                       ? 1
                       : mark.status === 'rest' || mark.status === null
                         ? null
-                        : 0.3,
+                        : Math.max(0.3, shareOf(days, mark.date)),
                   future: mark.future,
                   strong: mark.date === today,
                   label: weekdays[index] ?? '',
@@ -181,7 +185,7 @@ export function HabitStatsScreen() {
               />
             ) : null}
             <AppText style={styles.sectionTitle}>{t('progress:recent_days')}</AppText>
-            <DayList days={days.slice(0, RECENT)} />
+            <DayList days={days.slice(0, RECENT)} unit={habit.goalUnit} color={color} />
           </Animated.View>
         ) : (
           <Animated.View key="history" entering={FadeIn.duration(260)} style={styles.section}>
@@ -191,7 +195,7 @@ export function HabitStatsScreen() {
                 total: days.filter((day) => day.status !== 'rest').length,
               })}
             </AppText>
-            <DayList days={days.slice(0, HISTORY)} />
+            <DayList days={days.slice(0, HISTORY)} unit={habit.goalUnit} color={color} />
           </Animated.View>
         )}
         {error ? (
@@ -239,15 +243,33 @@ const STATUS_LOOK: Readonly<Record<HabitDayStatus, { icon: IconName | null; key:
   rest: { icon: null, key: 'rest' },
 };
 
-/** Список дней: зелёная галочка — выполнено, пустой кружок — пропущено (как на макете). */
-function DayList({ days }: { readonly days: readonly HabitDay[] }) {
-  const { t, i18n } = useTranslation('progress');
+function shareOf(days: readonly HabitDay[], date: string): number {
+  const day = days.find((entry) => entry.date === date);
+  return day ? habitDayShare(day) : 0;
+}
+
+/**
+ * Список дней: зелёная галочка — выполнено, пустой кружок — пропущено (как на макете).
+ * NOTE: С HZ-09 частично набранный день — кольцо по доле цели и «5 из 8 стаканов».
+ */
+function DayList({
+  days,
+  unit,
+  color,
+}: {
+  readonly days: readonly HabitDay[];
+  readonly unit: GoalUnit;
+  readonly color: string;
+}) {
+  const { t, i18n } = useTranslation(['progress', 'habits']);
   const { theme } = useAppPreferences();
   return (
     <View testID="habit-days">
       {days.map((day, index) => {
         const look = STATUS_LOOK[day.status];
         const done = day.status === 'completed';
+        const share = habitDayShare(day);
+        const partial = !done && share > 0;
         return (
           <Animated.View
             key={day.date}
@@ -260,31 +282,82 @@ function DayList({ days }: { readonly days: readonly HabitDay[] }) {
             ]}
             testID="habit-day"
           >
-            <View
-              style={[
-                styles.mark,
-                done
-                  ? { backgroundColor: theme.success, borderColor: theme.success }
-                  : { borderColor: day.status === 'rest' ? theme.border : theme.textMuted },
-              ]}
-            >
-              {look.icon ? (
-                <Icon
-                  name={look.icon}
-                  size={done ? 15 : 13}
-                  color={done ? '#FFFDF3' : theme.textMuted}
-                  strokeWidth={done ? 2.6 : 1.8}
-                />
-              ) : null}
-            </View>
+            {partial ? (
+              <PartialMark share={share} color={color} track={theme.border} />
+            ) : (
+              <View
+                style={[
+                  styles.mark,
+                  done
+                    ? { backgroundColor: theme.success, borderColor: theme.success }
+                    : { borderColor: day.status === 'rest' ? theme.border : theme.textMuted },
+                ]}
+              >
+                {look.icon ? (
+                  <Icon
+                    name={look.icon}
+                    size={done ? 15 : 13}
+                    color={done ? '#FFFDF3' : theme.textMuted}
+                    strokeWidth={done ? 2.6 : 1.8}
+                  />
+                ) : null}
+              </View>
+            )}
             <AppText style={styles.dayDate}>
               {formatCalendarDate(localDate(day.date), i18n.language as SupportedLocale)}
             </AppText>
-            <AppText style={[styles.dayStatus, { color: theme.textMuted }]}>{t(look.key)}</AppText>
+            <AppText style={[styles.dayStatus, { color: theme.textMuted }]}>
+              {partial
+                ? t('habits:progress_of', {
+                    done: day.progress,
+                    goal: goalOfText(t, i18n.language, day.target, unit),
+                  })
+                : t(`progress:${look.key}`)}
+            </AppText>
           </Animated.View>
         );
       })}
     </View>
+  );
+}
+
+const MARK = 24;
+const MARK_STROKE = 2.5;
+const MARK_RADIUS = (MARK - MARK_STROKE) / 2;
+const MARK_LENGTH = 2 * Math.PI * MARK_RADIUS;
+
+/** Кольцо частичного дня: заполнено на долю цели цветом привычки. */
+function PartialMark({
+  share,
+  color,
+  track,
+}: {
+  readonly share: number;
+  readonly color: string;
+  readonly track: string;
+}) {
+  return (
+    <Svg width={MARK} height={MARK} testID="habit-day-partial">
+      <Circle
+        cx={MARK / 2}
+        cy={MARK / 2}
+        r={MARK_RADIUS}
+        strokeWidth={MARK_STROKE}
+        fill="none"
+        stroke={track}
+      />
+      <Circle
+        cx={MARK / 2}
+        cy={MARK / 2}
+        r={MARK_RADIUS}
+        strokeWidth={MARK_STROKE}
+        fill="none"
+        stroke={color}
+        strokeLinecap="round"
+        strokeDasharray={`${MARK_LENGTH * share} ${MARK_LENGTH}`}
+        transform={`rotate(-90 ${MARK / 2} ${MARK / 2})`}
+      />
+    </Svg>
   );
 }
 

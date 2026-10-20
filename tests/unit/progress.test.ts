@@ -65,6 +65,8 @@ describe('История привычки', () => {
     statuses.map((status, index) => ({
       date: `2026-10-${String(10 + index).padStart(2, '0')}`,
       status,
+      progress: status === 'completed' ? 1 : 0,
+      target: 1,
     }));
   it('несделанная сегодняшняя привычка не обрывает серию', () => {
     expect(habitStreak(history(['completed', 'rest', 'completed', 'pending']))).toEqual({

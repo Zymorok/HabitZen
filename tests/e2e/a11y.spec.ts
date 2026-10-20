@@ -68,6 +68,9 @@ for (const scheme of ['light', 'dark'] as const) {
     await page.getByTestId('habit-stats-back').click();
     await page.getByTestId('tab-profile').click();
     await audit(page, 'настройки');
+    await page.getByTestId('settings-habits').click();
+    await audit(page, 'мои привычки');
+    await page.getByTestId('my-habits-back').click();
     await page.getByTestId('settings-reminders').click();
     await audit(page, 'напоминания');
   });

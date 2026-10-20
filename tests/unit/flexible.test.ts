@@ -9,9 +9,16 @@ import {
   isCountGoal,
 } from '../../apps/mobile/src/features/habits/goal';
 import { applyProgress, planProgress } from '../../apps/mobile/src/features/today/progress';
+import {
+  moveItem,
+  orderOf,
+  positionsOf,
+  slotAt,
+} from '../../apps/mobile/src/features/habits/order';
 import type { PlanItem } from '../../apps/mobile/src/features/today/data/plan-api';
 import {
   bestDay,
+  habitDayShare,
   habitWeekLine,
   weekDelta,
   yearGrid,
@@ -158,5 +165,40 @@ describe('годовая карта', () => {
     expect(grid.activeDays).toBe(2);
     const october = grid.months.find((month) => month.month === '2026-10-01');
     expect(grid.columns[october!.column]!.some((cell) => cell.date === '2026-10-01')).toBe(true);
+  });
+});
+
+describe('частичный день в статистике привычки (HZ-09)', () => {
+  const day = (
+    status: 'completed' | 'pending' | 'missed' | 'rest',
+    progress: number,
+    target = 8,
+  ) => ({
+    date: '2026-10-20',
+    status,
+    progress,
+    target,
+  });
+  it('доля цели — для набранного не до конца дня', () => {
+    expect(habitDayShare(day('missed', 5))).toBe(5 / 8);
+    expect(habitDayShare(day('pending', 0))).toBe(0);
+    expect(habitDayShare(day('completed', 8))).toBe(1);
+    // NOTE: Перевыполнение без отметки не превращается в «выполнено» — доля меньше единицы.
+    expect(habitDayShare(day('missed', 12))).toBeLessThan(1);
+    expect(habitDayShare(day('rest', 3))).toBe(0);
+  });
+});
+
+describe('порядок привычек перетаскиванием (HZ-09)', () => {
+  it('строка переезжает, остальные сдвигаются на одну позицию', () => {
+    const start = positionsOf(['a', 'b', 'c', 'd']);
+    expect(orderOf(moveItem(start, 3, 0))).toEqual(['d', 'a', 'b', 'c']);
+    expect(orderOf(moveItem(start, 0, 2))).toEqual(['b', 'c', 'a', 'd']);
+    expect(orderOf(moveItem(start, 1, 1))).toEqual(['a', 'b', 'c', 'd']);
+  });
+  it('место по смещению пальца не выходит за края списка', () => {
+    expect(slotAt(-50, 68, 4)).toBe(0);
+    expect(slotAt(100, 68, 4)).toBe(1);
+    expect(slotAt(1000, 68, 4)).toBe(3);
   });
 });

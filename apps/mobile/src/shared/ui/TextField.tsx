@@ -51,7 +51,9 @@ export function TextField({
         [0, 1],
         [palette.light.surface, palette.dark.surface],
       ),
-      boxShadow: `0 0 0 ${focus.value * 3}px rgba(91,140,99,${focus.value * 0.18})`,
+      // WARNING: Числа — через toFixed и не меньше нуля. Иначе гаснущая подсветка давала
+      // «2.86e-8», и Reanimated на Android падал на «неверном цвете» после ухода из поля (HZ-09).
+      boxShadow: `0 0 0 ${(Math.max(0, focus.value) * 3).toFixed(2)}px rgba(91,140,99,${(Math.max(0, focus.value) * 0.18).toFixed(3)})`,
     };
   });
   return (
