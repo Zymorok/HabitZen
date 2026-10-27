@@ -115,8 +115,9 @@ export function Sun() {
       </Svg>
       <Animated.View style={[StyleSheet.absoluteFill, raysStyle]}>
         <Svg width={box} height={box}>
-          {rays.map((d) => (
-            <Path key={d} d={d} fill="#FFE2A0" opacity={0.32} />
+          {/* NOTE: Ключ — номер луча: пока окно не измерено, все пути одинаковые («M0,0…»). */}
+          {rays.map((d, index) => (
+            <Path key={index} d={d} fill="#FFE2A0" opacity={0.32} />
           ))}
         </Svg>
       </Animated.View>
