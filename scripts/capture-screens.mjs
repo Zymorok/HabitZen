@@ -1,4 +1,5 @@
 // NOTE: HZ-07. Снимки всех 12 кадров макета в светлой и тёмной теме для README и сверки.
+// HZ-11: плюс четыре экрана сверх макета (x1–x4): «Быстрый старт», «Порядок», итоги недели, медали.
 // Нужны: локальный Supabase (`npm run db:start`) и приложение на http://localhost:8097.
 // Затем `py resources/design/screens/make_gallery.py` собирает галерею в docs/screens.
 import { mkdir } from 'node:fs/promises';
@@ -32,7 +33,8 @@ async function capture(browser, scheme) {
   await page.getByTestId('onboarding-shell').waitFor();
   await shot('01-welcome', 2500);
   await createDemoAccount(page, baseURL, email, () => shot('03-new-habit', 600));
-  await shot('02-today', 2000);
+  // NOTE: Плашка «Новое достижение!» уходит сама через 5 с — кадр 02 снимаем без неё.
+  await shot('02-today', 6000);
 
   await page.getByTestId('plan-row').filter({ hasText: 'Английский' }).click();
   await page.getByTestId('hold-screen').waitFor();
@@ -81,6 +83,25 @@ async function capture(browser, scheme) {
   await page.getByTestId('tab-profile').click();
   await page.getByTestId('profile-screen').waitFor();
   await shot('12-settings', 1500);
+
+  // NOTE: Экраны сверх макета (HZ-08–10).
+  await page.getByTestId('tab-today').click();
+  await page.getByTestId('today-add').click();
+  await page.getByTestId('habit-form').waitFor();
+  await page.getByTestId('form-title').fill('Бег по утрам');
+  await shot('x1-quick-start', 900);
+  await page.getByTestId('form-back').click();
+  await page.getByTestId('today-order').click();
+  await shot('x2-order', 900);
+  await page.getByTestId('today-order-done').click();
+  await page.getByTestId('tab-progress').click();
+  await page.getByTestId('open-week').click();
+  await page.getByTestId('week-summary-screen').waitFor();
+  await shot('x3-week', 1800);
+  await page.getByTestId('week-back').click();
+  await page.getByTestId('open-achievements').click();
+  await page.getByTestId('achievements-screen').waitFor();
+  await shot('x4-achievements', 1500);
   await page.close();
 }
 

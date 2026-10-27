@@ -1,5 +1,6 @@
 // NOTE: HZ-07. Видео-прохождение приложения в браузере (390×844) для превью в README:
 // план дня → удержание → «Отлично!» → награда → дерево → фокус → календарь → тёмная тема.
+// HZ-11: плюс «Быстрый старт», режим «Порядок», итоги недели, медали и цветовая тема.
 // Нужны локальный Supabase и приложение на http://localhost:8097. Видео — storage/reports/video.
 import { mkdir, readdir, rename } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
@@ -74,8 +75,31 @@ try {
   await page.getByTestId('progress-habit').filter({ hasText: 'Читать 20 минут' }).click();
   await pause(3000);
   await page.getByTestId('habit-stats-back').click();
+  await page.getByTestId('open-week').click();
+  await pause(3500);
+  await page.getByTestId('week-back').click();
+  await page.getByTestId('open-achievements').click();
+  await pause(3500);
+  await page.getByTestId('achievements-back').click();
+
+  await page.getByTestId('tab-today').click();
+  await pause(1200);
+  await page.getByTestId('today-order').click();
+  await pause(2500);
+  await page.getByTestId('today-order-done').click();
+  await page.getByTestId('today-add').click();
+  await page.getByTestId('form-title').pressSequentially('Бег по утрам', { delay: 60 });
+  await pause(1500);
+  await page.getByTestId('template-water').click();
+  await pause(2500);
+  await page.getByTestId('form-back').click();
+
   await page.getByTestId('tab-profile').click();
   await pause(2000);
+  await page.getByTestId('accent-ocean').click();
+  await pause(2000);
+  await page.getByTestId('accent-forest').click();
+  await pause(1000);
   await page.getByRole('switch', { name: 'Тёмная тема' }).click();
   await pause(2500);
   await page.getByTestId('tab-today').click();

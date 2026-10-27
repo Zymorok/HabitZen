@@ -3,7 +3,8 @@
 Берёт снимки `npm run screens` (storage/reports/screens/{light,dark}/NN-*.png) и собирает:
   docs/screens/{light,dark}/NN-*.webp  — каждый кадр 390×844 для README;
   docs/screens/overview-{light,dark}.webp — все 12 кадров двумя рядами, как на макете;
-  docs/screens/mockup-vs-app-1.webp и -2.webp — макет сверху, приложение снизу.
+  docs/screens/mockup-vs-app-1.webp и -2.webp — макет сверху, приложение снизу;
+  docs/screens/extras-{light,dark}.webp — четыре экрана сверх макета (HZ-11: x1–x4).
 
 Запуск из корня проекта:  py resources/design/screens/make_gallery.py
 """
@@ -63,6 +64,12 @@ def main():
         for path, image in zip(shots, images):
             save_webp(image.resize((390, 844), Image.LANCZOS), OUT / scheme / f'{path.stem}.webp')
         save_webp(grid(images, 6, 520), OUT / f'overview-{scheme}.webp', quality=80)
+        extras = sorted((SOURCE / scheme).glob('x[0-9]-*.png'))
+        if extras:
+            extra_images = [Image.open(path).convert('RGB') for path in extras]
+            for path, image in zip(extras, extra_images):
+                save_webp(image.resize((390, 844), Image.LANCZOS), OUT / scheme / f'{path.stem}.webp')
+            save_webp(grid(extra_images, len(extra_images), 520), OUT / f'extras-{scheme}.webp', quality=80)
 
     app = [Image.open(path).convert('RGB') for path in frames('light')]
     mockup = mockup_frames()
