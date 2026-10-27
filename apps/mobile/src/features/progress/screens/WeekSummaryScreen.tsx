@@ -318,7 +318,7 @@ function HabitLine({ habit, index }: { readonly habit: WeekHabit; readonly index
     >
       <Image
         source={habitArt(habit.iconKey)}
-        className="h-8 w-8"
+        style={{ width: 32, height: 32 }}
         resizeMode="contain"
         accessible={false}
       />

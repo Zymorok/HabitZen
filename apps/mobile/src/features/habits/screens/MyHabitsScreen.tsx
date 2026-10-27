@@ -39,6 +39,7 @@ const ROW = 68;
  * «Мои привычки» (HZ-09): свой порядок перетаскиванием — в нём же идут план дня и итоги —
  * и архив, из которого привычку можно вернуть. Нажатие на строку открывает изменение.
  * NOTE: Раскладка — классы NativeWind (HZ-11); цвета темы — в style, они меняются с темой.
+ * WARNING: Размер картинок — только в style: в браузере Image ставит свой размер поверх класса.
  */
 export function MyHabitsScreen() {
   const router = useRouter();
@@ -213,7 +214,7 @@ function HabitLine({ habit, onPress }: { readonly habit: Habit; readonly onPress
     >
       <Image
         source={habitArt(habit.iconKey)}
-        className="h-8 w-8"
+        style={{ width: 32, height: 32 }}
         resizeMode="contain"
         accessible={false}
       />
@@ -266,7 +267,7 @@ function ArchivedLine({
     >
       <Image
         source={habitArt(habit.iconKey)}
-        className="h-8 w-8 opacity-55"
+        style={{ width: 32, height: 32, opacity: 0.55 }}
         resizeMode="contain"
         accessible={false}
       />

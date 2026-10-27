@@ -425,7 +425,7 @@ function EmptyPlan({
 function OrderRow({ title, iconKey }: { readonly title: string; readonly iconKey: string }) {
   return (
     <View className="flex-1 flex-row items-center gap-3 pr-3.5" testID="order-row">
-      <Image source={habitArt(iconKey)} className="h-[30px] w-[30px]" resizeMode="contain" />
+      <Image source={habitArt(iconKey)} style={{ width: 30, height: 30 }} resizeMode="contain" />
       <AppText numberOfLines={1} style={styles.orderTitle}>
         {title}
       </AppText>
