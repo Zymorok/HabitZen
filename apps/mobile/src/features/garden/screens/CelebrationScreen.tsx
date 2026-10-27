@@ -84,7 +84,12 @@ export function CelebrationScreen() {
   const current = streak.data?.current ?? 0;
 
   return (
-    <View style={styles.shell} testID="celebration-screen">
+    // NOTE: Модальный экран (HZ-11) закрывает план сплошным фоном: под градиентом не должен
+    // просвечивать предыдущий экран — и проверка контраста видит настоящий цвет фона.
+    <View
+      style={[styles.shell, { backgroundColor: isDark ? '#1A2A22' : '#FDF8EC' }]}
+      testID="celebration-screen"
+    >
       <LinearGradient
         colors={isDark ? ['#1A2A22', '#2E3326', '#1A2A22'] : ['#FDF8EC', '#FBEBD0', '#F6F1DF']}
         style={StyleSheet.absoluteFill}
