@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import type { Session } from '@supabase/supabase-js';
+import type { Session, User } from '@supabase/supabase-js';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCalendars } from 'expo-localization';
 import { supabase } from '../supabase/client';
@@ -38,6 +38,27 @@ function requireClient() {
   return supabase;
 }
 
+/** Ключ в данных аккаунта: профиль, который ещё не перенесён (HZ-11, облако). */
+const PENDING_PROFILE = 'pending_profile';
+
+/**
+ * Первый вход после подтверждения почты: имя, пояс и язык из регистрации переносятся в профиль,
+ * затем отметка в данных аккаунта снимается. Ошибка не мешает входу — профиль можно поправить.
+ */
+async function applyPendingProfile(user: User): Promise<void> {
+  const pending = user.user_metadata?.[PENDING_PROFILE] as
+    { display_name?: string; time_zone?: string; language_preference?: string } | null | undefined;
+  if (!pending) return;
+  const client = requireClient();
+  const { error } = await client.from('profiles').update(pending).eq('id', user.id);
+  if (error) {
+    void mobileLogger.emit('warning', 'auth', 'auth.profile_update_failed', { code: error.code });
+    return;
+  }
+  await client.auth.updateUser({ data: { [PENDING_PROFILE]: null } });
+  void mobileLogger.emit('info', 'auth', 'auth.pending_profile_applied');
+}
+
 export function AuthProvider({ children }: { readonly children: ReactNode }) {
   const queryClient = useQueryClient();
   const { preferences } = useAppPreferences();
@@ -66,7 +87,7 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
   }, [queryClient]);
 
   const signIn = useCallback(async (email: string, password: string) => {
-    const { error } = await requireClient().auth.signInWithPassword({
+    const { data, error } = await requireClient().auth.signInWithPassword({
       email: email.trim(),
       password,
     });
@@ -77,12 +98,24 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
       throw error;
     }
     void mobileLogger.emit('info', 'auth', 'auth.signed_in');
+    if (data.user) await applyPendingProfile(data.user);
   }, []);
 
   const signUp = useCallback(
     async (name: string, email: string, password: string) => {
       const client = requireClient();
-      const { data, error } = await client.auth.signUp({ email: email.trim(), password });
+      const profile = {
+        display_name: name.trim().slice(0, 80) || undefined,
+        time_zone: deviceTimeZone(),
+        language_preference: preferences.language,
+      };
+      // NOTE: С подтверждением почты (облачный Supabase) сессии сразу нет и профиль не обновить.
+      // Имя, пояс и язык ждут в данных аккаунта и переносятся в профиль при первом входе.
+      const { data, error } = await client.auth.signUp({
+        email: email.trim(),
+        password,
+        options: { data: { [PENDING_PROFILE]: profile } },
+      });
       if (error) {
         void mobileLogger.emit('warning', 'auth', 'auth.sign_up_failed', {
           code: error.code ?? 'unknown',
@@ -93,17 +126,16 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
       // NOTE: Профиль создаёт сервер. Клиент лишь заполняет разрешённые поля: имя, пояс, язык.
       const { error: profileError } = await client
         .from('profiles')
-        .update({
-          display_name: name.trim().slice(0, 80) || undefined,
-          time_zone: deviceTimeZone(),
-          language_preference: preferences.language,
-        })
+        .update(profile)
         .eq('id', data.user.id);
       if (profileError) {
         // WARNING: Аккаунт уже создан; имя можно будет поправить позже, вход не отменяется.
         void mobileLogger.emit('warning', 'auth', 'auth.profile_update_failed', {
           code: profileError.code,
         });
+      } else {
+        // NOTE: Профиль уже заполнен — отложенная копия не должна перезаписать его при входе.
+        await client.auth.updateUser({ data: { [PENDING_PROFILE]: null } });
       }
       void mobileLogger.emit('info', 'auth', 'auth.signed_up');
       return true;
