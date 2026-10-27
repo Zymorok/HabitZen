@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import { Platform } from 'react-native';
-import * as Linking from 'expo-linking';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../core/auth/AuthProvider';
 import { errorMessageKey } from '../../../core/supabase/errors';
@@ -8,13 +6,8 @@ import { Button } from '../../../shared/ui/Button';
 import { TextField } from '../../../shared/ui/TextField';
 import { AuthLayout } from '../components/AuthLayout';
 import { FormNotice } from '../components/FormNotice';
+import { authCallbackUrl } from '../links';
 import { emailProblem } from '../validation';
-
-/** Куда вернуть человека из письма: в браузере — на этот же сайт, на телефоне — в приложение. */
-function recoveryRedirect(): string {
-  if (Platform.OS === 'web') return `${globalThis.location.origin}/auth/callback`;
-  return Linking.createURL('/auth/callback');
-}
 
 /** Восстановление пароля: письмо со ссылкой на экран нового пароля. */
 export function ForgotPasswordScreen() {
@@ -34,7 +27,7 @@ export function ForgotPasswordScreen() {
     setBusy(true);
     setError(null);
     try {
-      await requestPasswordReset(email, recoveryRedirect());
+      await requestPasswordReset(email, authCallbackUrl());
       // NOTE: Ответ одинаковый для любой почты: нельзя узнать, есть ли такой аккаунт.
       setSent(true);
     } catch (failure) {

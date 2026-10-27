@@ -14,13 +14,16 @@ interface AuthContext {
   readonly status: AuthStatus;
   readonly session: Session | null;
   signIn(email: string, password: string): Promise<void>;
-  /** Возвращает true, если вход выполнен сразу; false — нужно подтвердить почту. */
-  signUp(name: string, email: string, password: string): Promise<boolean>;
+  /**
+   * Возвращает true, если вход выполнен сразу; false — нужно подтвердить почту.
+   * redirectTo — куда ведёт ссылка из письма подтверждения.
+   */
+  signUp(name: string, email: string, password: string, redirectTo: string): Promise<boolean>;
   signOut(): Promise<void>;
   requestPasswordReset(email: string, redirectTo: string): Promise<void>;
   updatePassword(password: string): Promise<void>;
-  /** Сессия из ссылки восстановления пароля. */
-  adoptRecoverySession(accessToken: string, refreshToken: string): Promise<void>;
+  /** Сессия из ссылки письма: подтверждение почты или восстановление пароля. */
+  adoptLinkSession(accessToken: string, refreshToken: string): Promise<void>;
 }
 
 const Context = createContext<AuthContext | null>(null);
@@ -102,7 +105,7 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
   }, []);
 
   const signUp = useCallback(
-    async (name: string, email: string, password: string) => {
+    async (name: string, email: string, password: string, redirectTo: string) => {
       const client = requireClient();
       const profile = {
         display_name: name.trim().slice(0, 80) || undefined,
@@ -111,10 +114,12 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
       };
       // NOTE: С подтверждением почты (облачный Supabase) сессии сразу нет и профиль не обновить.
       // Имя, пояс и язык ждут в данных аккаунта и переносятся в профиль при первом входе.
+      // FIXME(HZ-11): Без emailRedirectTo ссылка из письма вела на адрес сайта из панели Supabase,
+      // а не обратно в приложение.
       const { data, error } = await client.auth.signUp({
         email: email.trim(),
         password,
-        options: { data: { [PENDING_PROFILE]: profile } },
+        options: { data: { [PENDING_PROFILE]: profile }, emailRedirectTo: redirectTo },
       });
       if (error) {
         void mobileLogger.emit('warning', 'auth', 'auth.sign_up_failed', {
@@ -167,12 +172,15 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
     void mobileLogger.emit('info', 'auth', 'auth.password_updated');
   }, []);
 
-  const adoptRecoverySession = useCallback(async (accessToken: string, refreshToken: string) => {
-    const { error } = await requireClient().auth.setSession({
+  const adoptLinkSession = useCallback(async (accessToken: string, refreshToken: string) => {
+    const { data, error } = await requireClient().auth.setSession({
       access_token: accessToken,
       refresh_token: refreshToken,
     });
     if (error) throw error;
+    // NOTE: Подтверждение почты — первый вход: имя, пояс и язык из регистрации ждут здесь.
+    if (data.user) await applyPendingProfile(data.user);
+    void mobileLogger.emit('info', 'auth', 'auth.link_session_adopted');
   }, []);
 
   const value = useMemo(
@@ -184,7 +192,7 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
       signOut,
       requestPasswordReset,
       updatePassword,
-      adoptRecoverySession,
+      adoptLinkSession,
     }),
     [
       status,
@@ -194,7 +202,7 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
       signOut,
       requestPasswordReset,
       updatePassword,
-      adoptRecoverySession,
+      adoptLinkSession,
     ],
   );
   return <Context.Provider value={value}>{children}</Context.Provider>;

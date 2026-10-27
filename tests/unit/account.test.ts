@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  authLink,
   emailProblem,
   passwordProblem,
-  recoveryTokens,
 } from '../../apps/mobile/src/features/auth/validation';
 import { errorMessageKey, isConflict } from '../../apps/mobile/src/core/supabase/errors';
 import {
@@ -26,15 +26,33 @@ describe('форма входа', () => {
   });
   it('достаёт сессию из ссылки письма и отвергает неполную ссылку', () => {
     expect(
-      recoveryTokens(
+      authLink(
         'http://localhost:8097/auth/callback#access_token=a.b.c&refresh_token=r1&type=recovery',
       ),
-    ).toEqual({ accessToken: 'a.b.c', refreshToken: 'r1' });
-    expect(recoveryTokens('habitzen://auth/callback?access_token=x&refresh_token=y')).toEqual({
+    ).toEqual({ kind: 'session', recovery: true, accessToken: 'a.b.c', refreshToken: 'r1' });
+    expect(authLink('habitzen://auth/callback?access_token=x&refresh_token=y')).toEqual({
+      kind: 'session',
+      recovery: false,
       accessToken: 'x',
       refreshToken: 'y',
     });
-    expect(recoveryTokens('http://localhost:8097/auth/callback#error=access_denied')).toBeNull();
+    expect(authLink('http://localhost:8097/auth/callback#error=access_denied')).toEqual({
+      kind: 'invalid',
+    });
+    expect(authLink('habitzen://auth/callback')).toEqual({ kind: 'invalid' });
+  });
+  it('отличает подтверждение почты от восстановления пароля', () => {
+    // NOTE: Так Supabase возвращает в приложение после ссылки «Подтвердите почту».
+    const confirm = authLink(
+      'habitzen://auth/callback#access_token=t&expires_in=3600&refresh_token=r&token_type=bearer&type=signup',
+    );
+    expect(confirm).toMatchObject({ kind: 'session', recovery: false });
+    // NOTE: Повторный переход по той же ссылке — ошибка, а не вечная загрузка.
+    expect(
+      authLink(
+        'habitzen://auth/callback#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid',
+      ),
+    ).toEqual({ kind: 'invalid' });
   });
 });
 
@@ -47,6 +65,9 @@ describe('понятные ошибки вместо сырых ответов �
       'auth:error_email_taken',
     );
     expect(errorMessageKey({ code: 'weak_password' })).toBe('auth:error_weak_password');
+    expect(errorMessageKey({ code: 'email_not_confirmed', status: 400 })).toBe(
+      'auth:error_email_not_confirmed',
+    );
     expect(errorMessageKey({ status: 429 })).toBe('auth:error_rate_limited');
   });
   it('различает ответы команд привычек', () => {

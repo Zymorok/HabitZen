@@ -16,6 +16,7 @@ export type ErrorMessageKey =
   | 'auth:error_weak_password'
   | 'auth:error_rate_limited'
   | 'auth:error_invalid_email'
+  | 'auth:error_email_not_confirmed'
   | 'auth:error_not_configured';
 
 interface ErrorLike {
@@ -33,6 +34,8 @@ const AUTH_CODES: Readonly<Record<string, ErrorMessageKey>> = {
   over_request_rate_limit: 'auth:error_rate_limited',
   over_email_send_rate_limit: 'auth:error_rate_limited',
   email_address_invalid: 'auth:error_invalid_email',
+  // NOTE: Вход до перехода по ссылке из письма подтверждения (облачный Supabase).
+  email_not_confirmed: 'auth:error_email_not_confirmed',
   validation_failed: 'errors:invalid',
   session_not_found: 'errors:session',
   refresh_token_not_found: 'errors:session',

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Platform, View } from 'react-native';
 import * as Linking from 'expo-linking';
 import { Redirect, useRouter } from 'expo-router';
@@ -12,51 +12,72 @@ import { TextField } from '../../../shared/ui/TextField';
 import { AuthLayout } from '../components/AuthLayout';
 import { FormNotice } from '../components/FormNotice';
 import { TextLink } from '../components/TextLink';
-import { passwordProblem, recoveryTokens } from '../validation';
+import { authLink, passwordProblem } from '../validation';
+import type { AuthLink } from '../validation';
 
 /**
- * Возврат из письма восстановления. Ссылка несёт временную сессию —
- * экран принимает её и ведёт к форме нового пароля.
+ * Возврат из письма: подтверждение почты при регистрации или восстановление пароля.
+ * Ссылка несёт сессию — экран принимает её и ведёт в план дня или к форме нового пароля.
  */
-export function RecoveryCallbackScreen() {
+export function AuthCallbackScreen() {
   const router = useRouter();
   const { t } = useTranslation('auth');
   const { theme } = useAppPreferences();
-  const { adoptRecoverySession } = useAuth();
-  const nativeUrl = Linking.useURL();
+  const { status, adoptLinkSession } = useAuth();
+  // FIXME(HZ-11): Раньше здесь был useURL: если приложение уже было открыто, ссылка приходила
+  // до появления экрана, он её не видел и крутил загрузку вечно. useLinkingURL сразу знает
+  // последнюю ссылку — и при холодном запуске, и при возврате из почты.
+  const nativeUrl = Linking.useLinkingURL();
+  // NOTE: В браузере адрес запоминается один раз: ниже токены из него стираются.
+  const [webUrl] = useState(() => (Platform.OS === 'web' ? globalThis.location.href : null));
+  const url = webUrl ?? nativeUrl;
+  const link = useMemo<AuthLink>(() => (url ? authLink(url) : { kind: 'invalid' }), [url]);
   const [failed, setFailed] = useState(false);
+  const handled = useRef<string | null>(null);
 
   useEffect(() => {
-    const url = Platform.OS === 'web' ? globalThis.location.href : nativeUrl;
-    if (!url) return;
-    const tokens = recoveryTokens(url);
-    if (!tokens) {
-      setFailed(true);
-      return;
-    }
+    if (link.kind !== 'session' || handled.current === link.accessToken) return;
+    handled.current = link.accessToken;
     // WARNING: Токены сразу убираются из адресной строки браузера, чтобы не остались в истории.
     if (Platform.OS === 'web') globalThis.history.replaceState(null, '', '/auth/callback');
-    adoptRecoverySession(tokens.accessToken, tokens.refreshToken)
-      .then(() => router.replace('/auth/new-password'))
+    adoptLinkSession(link.accessToken, link.refreshToken)
+      .then(() =>
+        link.recovery ? router.replace('/auth/new-password') : resetTo(router, '/today'),
+      )
       .catch(() => setFailed(true));
-  }, [nativeUrl, adoptRecoverySession, router]);
+  }, [link, adoptLinkSession, router]);
+
+  const broken = failed || link.kind === 'invalid';
+  const recovery = link.kind === 'session' && link.recovery;
+  const title = broken ? t('link_title') : recovery ? t('reset_title') : t('confirm_title');
+  const body = broken ? t('link_invalid') : recovery ? t('link_checking') : t('confirm_checking');
+
+  // NOTE: Старая ссылка у того, кто уже вошёл, не пугает ошибкой — просто ведёт в план дня.
+  if (broken && status === 'signedIn') return <Redirect href="/today" />;
 
   return (
     <AuthLayout
-      testID="recovery-callback"
-      title={t('reset_title')}
-      body={failed ? t('link_invalid') : t('link_checking')}
+      testID="auth-callback"
+      title={title}
+      body={body}
       footer={
-        failed ? (
-          <TextLink
-            label={t('reset_send')}
-            testID="recovery-retry"
-            onPress={() => router.replace('/auth/forgot')}
-          />
+        broken ? (
+          <>
+            <TextLink
+              label={t('sign_in')}
+              testID="link-sign-in"
+              onPress={() => router.replace('/auth/sign-in')}
+            />
+            <TextLink
+              label={t('forgot_password')}
+              testID="recovery-retry"
+              onPress={() => router.replace('/auth/forgot')}
+            />
+          </>
         ) : null
       }
     >
-      {failed ? null : (
+      {broken ? null : (
         <View style={{ alignItems: 'center', paddingVertical: 12 }}>
           <ActivityIndicator color={theme.primary} />
         </View>

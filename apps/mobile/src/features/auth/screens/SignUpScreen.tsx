@@ -9,6 +9,7 @@ import { TextField } from '../../../shared/ui/TextField';
 import { AuthLayout } from '../components/AuthLayout';
 import { FormNotice } from '../components/FormNotice';
 import { TextLink } from '../components/TextLink';
+import { authCallbackUrl } from '../links';
 import { emailProblem, passwordProblem } from '../validation';
 
 /** Регистрация («Начать»): имя, почта, пароль. */
@@ -44,10 +45,10 @@ export function SignUpScreen() {
     setError(null);
     setNotice(null);
     try {
-      const signedIn = await signUp(name, email, password);
+      const signedIn = await signUp(name, email, password, authCallbackUrl());
       if (signedIn) resetTo(router, '/today');
-      // NOTE: Если на сервере включено подтверждение почты, сессии ещё нет — просим проверить почту.
-      else setNotice(t('auth:check_email'));
+      // NOTE: Если на сервере включено подтверждение почты, сессии ещё нет — просим открыть письмо.
+      else setNotice(t('auth:check_email', { email: email.trim() }));
     } catch (failure) {
       setError(
         t(status === 'unconfigured' ? 'auth:error_not_configured' : errorMessageKey(failure)),

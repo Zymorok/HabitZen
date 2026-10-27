@@ -16,14 +16,31 @@ export function passwordProblem(password: string): 'password_short' | null {
   return password.length < MIN_PASSWORD_LENGTH ? 'password_short' : null;
 }
 
-/** Достаёт токены из ссылки восстановления пароля (после «#» или «?»). */
-export function recoveryTokens(url: string): { accessToken: string; refreshToken: string } | null {
+/** Что принесла ссылка из письма: сессию (подтверждение почты или новый пароль) или ничего. */
+export type AuthLink =
+  | {
+      readonly kind: 'session';
+      /** true — письмо «Забыли пароль?», false — подтверждение почты при регистрации. */
+      readonly recovery: boolean;
+      readonly accessToken: string;
+      readonly refreshToken: string;
+    }
+  | { readonly kind: 'invalid' };
+
+/** Разбирает ссылку из письма Supabase (параметры после «#» или «?»). */
+export function authLink(url: string): AuthLink {
   const tail = url.includes('#')
     ? url.slice(url.indexOf('#') + 1)
     : url.slice(url.indexOf('?') + 1);
   const params = new URLSearchParams(tail);
   const accessToken = params.get('access_token');
   const refreshToken = params.get('refresh_token');
-  if (!accessToken || !refreshToken) return null;
-  return { accessToken, refreshToken };
+  // NOTE: Устаревшая или повторная ссылка приходит с error=… вместо токенов.
+  if (!accessToken || !refreshToken) return { kind: 'invalid' };
+  return {
+    kind: 'session',
+    recovery: params.get('type') === 'recovery',
+    accessToken,
+    refreshToken,
+  };
 }

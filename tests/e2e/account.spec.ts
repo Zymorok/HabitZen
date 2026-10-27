@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { addHabit, PASSWORD, signUp, uniqueEmail } from './helpers';
@@ -111,5 +113,74 @@ test('восстановление пароля по ссылке из пись�
   await page.getByTestId('sign-in-email').fill(email);
   await page.getByTestId('sign-in-password').fill('New-habit-pass-1');
   await page.getByTestId('sign-in-submit').click();
+  await expect(page.getByTestId('today-screen')).toBeVisible();
+});
+
+/** Адрес и публикуемый ключ локального Supabase — те же, что у приложения в apps/mobile/.env.local. */
+function localSupabase(): { url: string; key: string } {
+  const env = readFileSync(join(process.cwd(), 'apps/mobile/.env.local'), 'utf8');
+  const value = (name: string) => new RegExp(`^${name}=(.+)$`, 'm').exec(env)?.[1]?.trim() ?? '';
+  return {
+    url: value('EXPO_PUBLIC_SUPABASE_URL'),
+    key: value('EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY'),
+  };
+}
+
+test('ссылка из письма подтверждения сразу впускает в план дня', async ({
+  browser,
+  page,
+  request,
+}) => {
+  // NOTE: Локально подтверждение почты выключено, поэтому письмо со ссылкой входа
+  // заказываем напрямую. Сервер возвращает в приложение так же, как облачный после «Подтвердите почту».
+  const { url, key } = localSupabase();
+  const email = uniqueEmail('confirm');
+  const headers = { apikey: key, 'Content-Type': 'application/json' };
+  const signUpResponse = await request.post(`${url}/auth/v1/signup`, {
+    headers,
+    data: {
+      email,
+      password: PASSWORD,
+      data: { pending_profile: { display_name: 'Почта', time_zone: 'Europe/Kyiv' } },
+    },
+  });
+  expect(signUpResponse.ok()).toBe(true);
+  const redirect = encodeURIComponent('http://localhost:8097/auth/callback');
+  const otp = await request.post(`${url}/auth/v1/otp?redirect_to=${redirect}`, {
+    headers,
+    data: { email, create_user: false },
+  });
+  expect(otp.ok()).toBe(true);
+
+  let link = '';
+  await expect
+    .poll(async () => {
+      const list = await (
+        await request.get(`${MAILPIT}/api/v1/search?query=${encodeURIComponent('to:' + email)}`)
+      ).json();
+      const id = list.messages?.[0]?.ID;
+      if (!id) return '';
+      const message = await (await request.get(`${MAILPIT}/api/v1/message/${id}`)).json();
+      const match = /https?:\/\/[^\s"'<>]+verify[^\s"'<>]+/.exec(
+        message.Text ?? message.HTML ?? '',
+      );
+      link = match ? match[0].replace(/&amp;/g, '&') : '';
+      return link;
+    })
+    .not.toBe('');
+
+  await page.goto(link);
+  await expect(page.getByTestId('today-screen')).toBeVisible();
+  // NOTE: Имя из регистрации перенесено в профиль при первом входе по ссылке.
+  await page.getByTestId('tab-profile').click();
+  await expect(page.getByTestId('profile-name')).toContainText('Почта');
+
+  // NOTE: Вторая попытка с той же ссылкой на другом устройстве — понятная ошибка и путь ко входу,
+  // а не вечная загрузка. У того, кто уже вошёл, старая ссылка просто ведёт в план дня.
+  const other = await browser.newPage();
+  await other.goto(link);
+  await expect(other.getByTestId('link-sign-in')).toBeVisible();
+  await other.close();
+  await page.goto(link);
   await expect(page.getByTestId('today-screen')).toBeVisible();
 });
