@@ -1,4 +1,4 @@
-import { ActivityIndicator, Image, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { useHaptics } from '../../../shared/haptics';
 import { useEffect, useRef } from 'react';
 import Animated, {
@@ -59,6 +59,13 @@ export function PlanRow({
   const { theme } = useAppPreferences();
   const swipe = useRef<SwipeableMethods>(null);
   const done = item.status === 'completed';
+  // NOTE: Выполненная карточка (задание, HZ-11): значок и текст плавно бледнеют, название
+  // зачёркивается; зелёная галочка остаётся яркой — как на макете кадра 02.
+  const dim = useSharedValue(done ? 1 : 0);
+  useEffect(() => {
+    dim.value = withTiming(done ? 1 : 0, { duration: 320 });
+  }, [done, dim]);
+  const fadeStyle = useAnimatedStyle(() => ({ opacity: 1 - dim.value * 0.45 }));
   const resting = item.status === 'skipped';
   const count = isCountGoal(item.target, item.goalUnit);
   const addLabel = t('add_amount', {
@@ -120,19 +127,22 @@ export function PlanRow({
           style={styles.touch}
         >
           {/* NOTE: Цветной значок без подложки — как в списке на кадре 02. */}
-          <Image
+          <Animated.Image
             source={habitArt(item.iconKey)}
-            style={[styles.art, resting ? styles.artResting : null]}
+            style={[styles.art, resting ? styles.artResting : null, fadeStyle]}
             resizeMode="contain"
             accessible={false}
           />
-          <View style={styles.text}>
+          <Animated.View style={[styles.text, fadeStyle]} testID="plan-row-text">
             <AppText
               numberOfLines={1}
               style={[
                 styles.title,
-                resting ? { color: theme.textMuted, textDecorationLine: 'line-through' } : null,
+                resting || done
+                  ? { color: theme.textMuted, textDecorationLine: 'line-through' }
+                  : null,
               ]}
+              testID="plan-row-title"
             >
               {item.title}
             </AppText>
@@ -146,7 +156,7 @@ export function PlanRow({
                 {details.join(' · ')}
               </AppText>
             ) : null}
-          </View>
+          </Animated.View>
           {busy ? (
             <ActivityIndicator size="small" color={theme.primary} />
           ) : resting ? (
