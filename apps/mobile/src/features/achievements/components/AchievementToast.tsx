@@ -8,7 +8,7 @@ import { useAppPreferences } from '../../../core/providers/AppPreferencesProvide
 import { useHaptics } from '../../../shared/haptics';
 import { AppText } from '../../../shared/ui/AppText';
 import { useNewAchievement } from '../useAchievements';
-import { Badge } from './Badge';
+import { Badge, goldText } from './Badge';
 
 /**
  * «Новое достижение!» (HZ-10): плашка выезжает сверху на главном экране, через пять секунд
@@ -18,7 +18,7 @@ export function AchievementToast() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation('progress');
-  const { theme } = useAppPreferences();
+  const { theme, isDark } = useAppPreferences();
   const haptics = useHaptics();
   const { fresh, dismiss } = useNewAchievement();
 
@@ -50,7 +50,7 @@ export function AchievementToast() {
       >
         <Badge icon={fresh.icon} unlocked size={44} />
         <View style={styles.text}>
-          <AppText variant="small" style={styles.label}>
+          <AppText variant="small" style={[styles.label, { color: goldText(isDark) }]}>
             {t('achievement_new')}
           </AppText>
           <AppText style={styles.title} numberOfLines={1}>
@@ -77,6 +77,6 @@ const styles = StyleSheet.create({
     boxShadow: '0 12px 28px rgba(18,47,32,0.18)',
   },
   text: { flex: 1, gap: 1 },
-  label: { color: '#B5741F', fontFamily: 'Manrope_700Bold', alignSelf: 'stretch' },
+  label: { fontFamily: 'Manrope_700Bold', alignSelf: 'stretch' },
   title: { fontFamily: 'Manrope_700Bold', fontSize: 16, alignSelf: 'stretch' },
 });

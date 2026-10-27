@@ -73,3 +73,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+
+/**
+ * Золотой текст наград («Получено», «Новое достижение!»): днём темнее, ночью светлее —
+ * контраст не ниже 4,5:1 на карточке в обеих темах (HZ-11, проверка axe).
+ */
+export function goldText(isDark: boolean): string {
+  return isDark ? '#F2C46D' : '#8A5512';
+}
