@@ -47,6 +47,21 @@ apps/mobile содержит все 12 кадров макета (HZ-02–HZ-07)
 
 После `expo prebuild` папка android пересоздаётся без `local.properties` — записать туда `sdk.dir=C:/Users/<имя>/AppData/Local/Android/Sdk`. Сборка для показа без сервера разработки (JS внутри APK): из apps/mobile/android `gradlew assembleRelease -PreactNativeArchitectures=x86_64` — файл `app/build/outputs/apk/release/app-release.apk`, подписан отладочным ключом и годится только для проверки. Release-сборка Android запрещает незашифрованный http, а локальный Supabase работает по http: для показа с локальным сервером в сгенерированной папке добавляется `app/src/release/AndroidManifest.xml` с `usesCleartextTraffic` (в Git не попадает). С настоящим сервером по https это не нужно.
 
+## Облачный Supabase (HZ-11)
+
+Облачный проект владельца — `qavwnuivhxfefqqtitoz.supabase.co`, все 9 миграций применены. Адрес и публичный ключ (`sb_publishable_…`) не секретны и попадают в приложение; служебный ключ и пароль базы в приложение и в Git не кладутся.
+
+Сборка APK под облако — те же переменные в окружении поверх `.env.local` (Expo не перезаписывает уже заданные):
+
+```bash
+cd apps/mobile/android
+EXPO_PUBLIC_SUPABASE_URL=https://qavwnuivhxfefqqtitoz.supabase.co EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<публичный ключ> ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a,x86_64
+```
+
+`arm64-v8a` — настоящие телефоны, `x86_64` — эмулятор. Сервер разработки (`npm run web`) по-прежнему работает с локальной базой.
+
+В облаке включено подтверждение почты, а свой почтовый сервер (SMTP) не настроен: встроенная почта Supabase шлёт письма только участникам проекта и с жёстким лимитом. Поэтому регистрация с чужой почтой не дойдёт до письма; для проверки — почта владельца проекта или временно выключенное «Confirm email». Имя, пояс и язык при регистрации с подтверждением сохраняются в данных аккаунта и переносятся в профиль при первом входе. Чтобы ссылки из писем (подтверждение, новый пароль) открывали приложение, в Authentication → URL Configuration нужен адрес `habitzen://**`.
+
 ## Снимки и видео (HZ-07)
 
 При запущенных приложении и Supabase: `npm run screens` — все 12 кадров в светлой и тёмной теме (storage/reports/screens), затем `py resources/design/screens/make_gallery.py` — галерея и сверка с макетом в docs/screens. `npm run demo:video` записывает прохождение в браузере, `py resources/design/screens/make_preview.py` делает из него анимированное превью docs/media/habitzen-demo.webp. Оба сценария создают одноразовые аккаунты hz-…@example.com и дописывают им историю только в локальной базе разработки. Для записи видео Playwright нужен его ffmpeg: `npx playwright install ffmpeg`.
