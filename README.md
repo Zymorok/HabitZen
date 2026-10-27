@@ -8,6 +8,8 @@
 
 **Видео с Android-эмулятора:** [docs/media/habitzen-android.mp4](docs/media/habitzen-android.mp4).
 
+**Готовое приложение для Android:** [HabitZen.apk в разделе Releases](https://github.com/Zymorok/HabitZen/releases/latest) — работает с облачным Supabase, локальный сервер для него не нужен.
+
 ## Экраны
 
 Все 12 кадров макета ([resources/design/reference.png](resources/design/reference.png)), светлая и тёмная тема:
