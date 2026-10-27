@@ -58,6 +58,8 @@ test('перетаскивание меняет порядок в списке �
     .poll(async () => (await titles(page, 'my-habit')).map((text) => text.split(/Каждый/)[0]))
     .toEqual(['Прогулка', 'Вода', 'Чтение']);
   await page.goto('/today');
+  // NOTE: После прямого перехода план грузится заново — под нагрузкой это дольше 5 с.
+  await expect(page.getByTestId('plan-row')).toHaveCount(3, { timeout: 20000 });
   await expect
     .poll(async () => (await titles(page, 'plan-row')).map((text) => text.trim()))
     .toEqual(['Прогулка', 'Вода', 'Чтение']);
