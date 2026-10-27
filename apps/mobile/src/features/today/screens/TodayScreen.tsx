@@ -238,13 +238,13 @@ export function TodayScreen() {
                 onWeekPress={() => router.push('/progress')}
               />
               {items.length > 1 ? (
-                <View style={styles.orderBar}>
+                <View className="-mb-1 flex-row items-center gap-2.5">
                   {ordering ? (
                     <AppText variant="small" style={[styles.orderHint, { color: theme.textMuted }]}>
                       {t('habits:order_hint_short')}
                     </AppText>
                   ) : (
-                    <View style={styles.orderHint} />
+                    <View className="flex-1" />
                   )}
                   <Pressable
                     onPress={() => setOrdering((value) => !value)}
@@ -424,8 +424,8 @@ function EmptyPlan({
 /** Строка в режиме «Порядок»: только значок и название — нажатия и свайпы отключены. */
 function OrderRow({ title, iconKey }: { readonly title: string; readonly iconKey: string }) {
   return (
-    <View style={styles.orderRow} testID="order-row">
-      <Image source={habitArt(iconKey)} style={styles.orderArt} resizeMode="contain" />
+    <View className="flex-1 flex-row items-center gap-3 pr-3.5" testID="order-row">
+      <Image source={habitArt(iconKey)} className="h-[30px] w-[30px]" resizeMode="contain" />
       <AppText numberOfLines={1} style={styles.orderTitle}>
         {title}
       </AppText>
@@ -476,7 +476,6 @@ const styles = StyleSheet.create({
   center: { alignItems: 'center', justifyContent: 'center', gap: 12, paddingVertical: 24 },
   card: { borderRadius: 22, borderWidth: 1, boxShadow: '0 10px 26px rgba(18,47,32,0.08)' },
   groups: { gap: 12 },
-  orderBar: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: -4 },
   orderHint: { flex: 1, paddingHorizontal: 6 },
   orderButton: {
     flexDirection: 'row',
@@ -487,8 +486,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   orderText: { fontFamily: 'Manrope_600SemiBold' },
-  orderRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, paddingRight: 14 },
-  orderArt: { width: 30, height: 30 },
   orderTitle: { flex: 1, fontFamily: 'Manrope_500Medium', fontSize: 15 },
   group: { gap: 6 },
   groupTitle: { fontFamily: 'Manrope_600SemiBold', paddingHorizontal: 6 },

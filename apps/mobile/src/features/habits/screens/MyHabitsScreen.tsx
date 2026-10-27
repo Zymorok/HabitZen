@@ -38,6 +38,7 @@ const ROW = 68;
 /**
  * «Мои привычки» (HZ-09): свой порядок перетаскиванием — в нём же идут план дня и итоги —
  * и архив, из которого привычку можно вернуть. Нажатие на строку открывает изменение.
+ * NOTE: Раскладка — классы NativeWind (HZ-11); цвета темы — в style, они меняются с темой.
  */
 export function MyHabitsScreen() {
   const router = useRouter();
@@ -62,31 +63,29 @@ export function MyHabitsScreen() {
 
   return (
     <Animated.View
-      style={[styles.shell, shellStyle, { paddingTop: Math.max(insets.top, 12) }]}
+      style={[{ flex: 1, paddingTop: Math.max(insets.top, 12) }, shellStyle]}
       testID="my-habits-screen"
     >
-      <View style={styles.topBar}>
+      <View className="flex-row items-center px-2.5">
         <IconButton
           accessibilityLabel={t('common:back')}
           onPress={() => router.back()}
           testID="my-habits-back"
         >
-          <View style={styles.flip}>
+          <View style={{ transform: [{ scaleX: -1 }] }}>
             <Icon name="arrow" color={theme.text} />
           </View>
         </IconButton>
-        <ThemedText variant="button" style={styles.topTitle}>
+        <ThemedText variant="button" style={{ flex: 1, textAlign: 'center', fontSize: 17 }}>
           {t('habits:my_habits')}
         </ThemedText>
-        <View style={styles.spacer} />
+        <View className="w-11" />
       </View>
 
       <ScrollView
         scrollEnabled={!dragging}
-        contentContainerStyle={[
-          styles.content,
-          { paddingBottom: Math.max(insets.bottom, 18) + 12 },
-        ]}
+        contentContainerClassName="w-full max-w-screen self-center gap-4 px-[18px]"
+        contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 18) + 12 }}
       >
         {habits.isPending ? (
           <ActivityIndicator color={theme.primary} />
@@ -95,12 +94,13 @@ export function MyHabitsScreen() {
             {t('habits:my_habits_empty')}
           </AppText>
         ) : (
-          <Animated.View entering={FadeInDown.duration(320)} style={styles.section}>
-            <AppText variant="small" style={[styles.hint, { color: theme.textMuted }]}>
+          <Animated.View entering={FadeInDown.duration(320)} style={{ gap: 8 }}>
+            <AppText variant="small" className="px-1" style={{ color: theme.textMuted }}>
               {t('habits:order_hint')}
             </AppText>
             <View
-              style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}
+              className="overflow-hidden rounded-card border"
+              style={{ backgroundColor: theme.surface, borderColor: theme.border }}
             >
               <SortableList
                 ids={list.map((habit) => habit.id)}
@@ -139,10 +139,13 @@ export function MyHabitsScreen() {
         ) : null}
 
         {(archived.data ?? []).length > 0 ? (
-          <Animated.View entering={FadeIn.duration(320)} style={styles.section}>
-            <AppText style={styles.sectionTitle}>{t('habits:archive_title')}</AppText>
+          <Animated.View entering={FadeIn.duration(320)} style={{ gap: 8 }}>
+            <AppText className="px-1" style={{ fontFamily: 'Manrope_600SemiBold', fontSize: 16 }}>
+              {t('habits:archive_title')}
+            </AppText>
             <View
-              style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}
+              className="overflow-hidden rounded-card border"
+              style={{ backgroundColor: theme.surface, borderColor: theme.border }}
               testID="archive-list"
             >
               {(archived.data ?? []).map((habit, index) => (
@@ -205,22 +208,27 @@ function HabitLine({ habit, onPress }: { readonly habit: Habit; readonly onPress
       accessibilityRole="button"
       accessibilityLabel={habit.title}
       accessibilityHint={t('edit_habit')}
-      style={styles.line}
+      className="flex-1 flex-row items-center gap-3 pr-3.5"
       testID="my-habit"
     >
       <Image
         source={habitArt(habit.iconKey)}
-        style={styles.art}
+        className="h-8 w-8"
         resizeMode="contain"
         accessible={false}
       />
-      <View style={styles.text}>
-        <AppText style={styles.title} numberOfLines={1}>
+      <View className="flex-1 gap-0.5">
+        <AppText
+          className="self-stretch"
+          style={{ fontFamily: 'Manrope_600SemiBold', fontSize: 15 }}
+          numberOfLines={1}
+        >
           {habit.title}
         </AppText>
         <AppText
           variant="small"
-          style={[styles.summary, { color: theme.textMuted }]}
+          className="self-stretch"
+          style={{ color: theme.textMuted }}
           numberOfLines={1}
         >
           {summary}
@@ -250,27 +258,31 @@ function ArchivedLine({
   );
   return (
     <View
-      style={[
-        styles.archived,
-        !first ? { borderTopWidth: StyleSheet.hairlineWidth, borderColor: theme.border } : null,
-      ]}
+      className="flex-row items-center gap-3 py-2.5 pl-4 pr-3"
+      style={
+        !first ? { borderTopWidth: StyleSheet.hairlineWidth, borderColor: theme.border } : null
+      }
       testID="archived-habit"
     >
       <Image
         source={habitArt(habit.iconKey)}
-        style={[styles.art, styles.dim]}
+        className="h-8 w-8 opacity-55"
         resizeMode="contain"
         accessible={false}
       />
-      <View style={styles.text}>
-        <AppText style={styles.title} numberOfLines={1}>
+      <View className="flex-1 gap-0.5">
+        <AppText
+          className="self-stretch"
+          style={{ fontFamily: 'Manrope_600SemiBold', fontSize: 15 }}
+          numberOfLines={1}
+        >
           {habit.title}
         </AppText>
-        <AppText variant="small" style={[styles.summary, { color: theme.textMuted }]}>
+        <AppText variant="small" className="self-stretch" style={{ color: theme.textMuted }}>
           {t('archived_on', { date })}
         </AppText>
       </View>
-      <View style={styles.restore}>
+      <View className="w-[130px]">
         <Button
           label={busy ? t('saving') : t('restore')}
           variant="outline"
@@ -282,31 +294,3 @@ function ArchivedLine({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  shell: { flex: 1 },
-  topBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10 },
-  topTitle: { flex: 1, textAlign: 'center', fontSize: 17 },
-  spacer: { width: 44 },
-  flip: { transform: [{ scaleX: -1 }] },
-  content: { paddingHorizontal: 18, gap: 16, width: '100%', maxWidth: 520, alignSelf: 'center' },
-  section: { gap: 8 },
-  hint: { paddingHorizontal: 4 },
-  sectionTitle: { fontFamily: 'Manrope_600SemiBold', fontSize: 16, paddingHorizontal: 4 },
-  card: { borderRadius: 22, borderWidth: 1, overflow: 'hidden' },
-  line: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, paddingRight: 14 },
-  art: { width: 32, height: 32 },
-  dim: { opacity: 0.55 },
-  text: { flex: 1, gap: 2 },
-  title: { fontFamily: 'Manrope_600SemiBold', fontSize: 15, alignSelf: 'stretch' },
-  summary: { alignSelf: 'stretch' },
-  archived: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 10,
-    paddingLeft: 16,
-    paddingRight: 12,
-  },
-  restore: { width: 130 },
-});

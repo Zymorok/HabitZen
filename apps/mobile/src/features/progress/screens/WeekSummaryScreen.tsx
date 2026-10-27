@@ -96,7 +96,7 @@ export function WeekSummaryScreen() {
       style={[styles.shell, shellStyle, { paddingTop: Math.max(insets.top, 12) }]}
       testID="week-summary-screen"
     >
-      <View style={styles.topBar}>
+      <View className="flex-row items-center px-2.5">
         <IconButton
           accessibilityLabel={t('common:back')}
           onPress={() => router.back()}
@@ -109,7 +109,7 @@ export function WeekSummaryScreen() {
         <ThemedText variant="button" style={styles.topTitle}>
           {t('progress:week_summary')}
         </ThemedText>
-        <View style={styles.spacer} />
+        <View className="w-11" />
       </View>
 
       <ScrollView
@@ -118,7 +118,7 @@ export function WeekSummaryScreen() {
           { paddingBottom: Math.max(insets.bottom, 18) + 12 },
         ]}
       >
-        <View style={styles.switcher}>
+        <View className="flex-row items-center">
           <IconButton
             accessibilityLabel={t('progress:week_prev')}
             onPress={() => step(-1)}
@@ -128,7 +128,7 @@ export function WeekSummaryScreen() {
               <Icon name="arrow" color={weekStart > firstWeek ? theme.text : theme.border} />
             </View>
           </IconButton>
-          <View style={styles.rangeText}>
+          <View className="flex-1 items-center">
             <AppText style={[styles.rangeLabel, { color: theme.textMuted }]}>
               {weekStart === currentWeek
                 ? t('progress:this_week')
@@ -150,7 +150,7 @@ export function WeekSummaryScreen() {
         </View>
 
         {summary.isError ? (
-          <View style={styles.center}>
+          <View className="items-center justify-center gap-3 py-10">
             <AppText style={{ color: theme.error, textAlign: 'center' }}>
               {t(errorMessageKey(summary.error))}
             </AppText>
@@ -161,7 +161,7 @@ export function WeekSummaryScreen() {
             />
           </View>
         ) : loading ? (
-          <View style={styles.center}>
+          <View className="items-center justify-center gap-3 py-10">
             <ActivityIndicator color={theme.primary} />
           </View>
         ) : (
@@ -205,7 +205,8 @@ export function WeekSummaryScreen() {
               </LinearGradient>
             </Animated.View>
 
-            <View style={styles.tiles}>
+            {/* NOTE: Плитки — классы NativeWind (HZ-11). */}
+            <View className="flex-row gap-2.5">
               <Tile
                 icon="check"
                 value={completed}
@@ -247,7 +248,8 @@ export function WeekSummaryScreen() {
               </AppText>
             ) : (
               <View
-                style={[styles.list, { backgroundColor: theme.surface, borderColor: theme.border }]}
+                className="overflow-hidden rounded-card border"
+                style={{ backgroundColor: theme.surface, borderColor: theme.border }}
               >
                 {habits.map((habit, index) => (
                   <HabitLine key={habit.habitId} habit={habit} index={index} />
@@ -277,7 +279,8 @@ function Tile({
   const { theme } = useAppPreferences();
   return (
     <View
-      style={[styles.tile, { backgroundColor: theme.surface, borderColor: theme.border }]}
+      className="flex-1 gap-1 rounded-[18px] border p-3"
+      style={{ backgroundColor: theme.surface, borderColor: theme.border }}
       testID={testID}
     >
       <Icon name={icon} size={18} color={theme.primary} strokeWidth={2} />
@@ -286,7 +289,11 @@ function Tile({
       ) : (
         <CountUp value={value} style={styles.tileValue} />
       )}
-      <AppText style={[styles.tileCaption, { color: theme.textMuted }]} numberOfLines={2}>
+      <AppText
+        className="self-stretch"
+        style={{ color: theme.textMuted, fontSize: 12, lineHeight: 16 }}
+        numberOfLines={2}
+      >
         {caption}
       </AppText>
     </View>
@@ -311,12 +318,12 @@ function HabitLine({ habit, index }: { readonly habit: WeekHabit; readonly index
     >
       <Image
         source={habitArt(habit.iconKey)}
-        style={styles.art}
+        className="h-8 w-8"
         resizeMode="contain"
         accessible={false}
       />
-      <View style={styles.habitText}>
-        <View style={styles.habitHead}>
+      <View className="flex-1 gap-1.5">
+        <View className="flex-row items-center gap-2">
           <AppText style={styles.habitTitle} numberOfLines={1}>
             {habit.title}
           </AppText>
@@ -324,7 +331,10 @@ function HabitLine({ habit, index }: { readonly habit: WeekHabit; readonly index
             {`${line.done}/${line.total}`}
           </AppText>
         </View>
-        <View style={[styles.track, { backgroundColor: theme.surfaceMuted }]}>
+        <View
+          className="h-1.5 overflow-hidden rounded-full"
+          style={{ backgroundColor: theme.surfaceMuted }}
+        >
           <View
             style={[
               styles.bar,
@@ -353,13 +363,9 @@ function HabitLine({ habit, index }: { readonly habit: WeekHabit; readonly index
 
 const styles = StyleSheet.create({
   shell: { flex: 1 },
-  topBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10 },
   topTitle: { flex: 1, textAlign: 'center', fontSize: 17 },
-  spacer: { width: 44 },
   flip: { transform: [{ scaleX: -1 }] },
   content: { paddingHorizontal: 18, gap: 14, width: '100%', maxWidth: 520, alignSelf: 'center' },
-  switcher: { flexDirection: 'row', alignItems: 'center' },
-  rangeText: { flex: 1, alignItems: 'center' },
   rangeLabel: {
     fontSize: 13,
     fontFamily: 'Manrope_600SemiBold',
@@ -367,7 +373,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   range: { fontSize: 22, lineHeight: 30, textAlign: 'center' },
-  center: { alignItems: 'center', justifyContent: 'center', gap: 12, paddingVertical: 40 },
   section: { gap: 14 },
   hero: { borderRadius: 24, padding: 20, alignItems: 'center', gap: 2 },
   heroValue: {
@@ -389,18 +394,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,253,243,0.16)',
   },
   deltaText: { color: '#FFFDF3', fontFamily: 'Manrope_600SemiBold', fontSize: 13 },
-  tiles: { flexDirection: 'row', gap: 10 },
-  tile: { flex: 1, borderRadius: 18, borderWidth: 1, padding: 12, gap: 4 },
   tileValue: { fontFamily: 'Manrope_700Bold', fontSize: 24, lineHeight: 30, alignSelf: 'stretch' },
-  tileCaption: { fontSize: 12, lineHeight: 16, alignSelf: 'stretch' },
   sectionTitle: { fontFamily: 'Manrope_600SemiBold', fontSize: 16, marginTop: 4 },
-  list: { borderRadius: 22, borderWidth: 1, overflow: 'hidden' },
   habit: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
-  art: { width: 32, height: 32 },
-  habitText: { flex: 1, gap: 6 },
-  habitHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   habitTitle: { flex: 1, fontFamily: 'Manrope_600SemiBold', fontSize: 15 },
   ratio: { fontFamily: 'Manrope_700Bold', fontSize: 15 },
-  track: { height: 6, borderRadius: 3, overflow: 'hidden' },
   bar: { height: '100%', borderRadius: 3 },
 });
