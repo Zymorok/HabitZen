@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Image, StyleSheet, View } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import type { ImageSourcePropType } from 'react-native';
 import Animated, {
   cancelAnimation,
@@ -13,6 +14,8 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
+  withSequence,
+  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
@@ -48,9 +51,10 @@ const RADIUS = (SIZE - STROKE) / 2;
 const LENGTH = 2 * Math.PI * RADIUS;
 
 /**
- * Кадр 04: удержание 1,2 с. Кольцо наполняется, телефон отзывается каждые 200 мс;
- * отпустил раньше — кольцо откатывается и жест отменяется. Отметка засчитывается
- * только после ответа сервера, затем — кадр 05.
+ * Кадр 04: удержание 1,2 с — жест Gesture.LongPress (Gesture Handler). Кольцо наполняется
+ * в UI-потоке с первого касания, телефон отзывается каждые 200 мс; отпустил раньше — кольцо
+ * откатывается и жест отменяется. На 100 % — сильная вибрация и пружинный «спалах» 1,15 → 1.
+ * Отметка засчитывается только после ответа сервера, затем — кадр 05.
  * NOTE: У привычки с количеством кольцо уже заполнено на набранную долю, снизу — «− 3 стакана +»,
  * а удержание засчитывает всю цель сразу.
  */
@@ -68,6 +72,7 @@ export function HoldScreen() {
   const count = item ? isCountGoal(item.target, item.goalUnit) : false;
   const share = item && count ? Math.min(1, item.progress / item.target) : 0;
   const hold = useSharedValue(0);
+  const flash = useSharedValue(1);
   // NOTE: Набранная доля цели: «3 из 8» — кольцо заполнено на 38 % ещё до удержания.
   const base = useSharedValue(share);
   const [percent, setPercent] = useState(0);
@@ -113,37 +118,55 @@ export function HoldScreen() {
     },
   );
 
-  const pressIn = () => {
-    if (!item || item.status !== 'pending' || command.isPending) return;
+  // NOTE: Лёгкая вибрация каждые 200 мс — человек чувствует, что жест идёт.
+  const startFeedback = () => {
     setHint('idle');
     setError(null);
-    cancelAnimation(hold);
-    hold.value = withTiming(
-      1,
-      // WARNING: 1,2 с — правило жеста, а не украшение. При «Уменьшении движения» Reanimated
-      // проигрывает анимацию мгновенно, и касание сразу засчитывалось бы как удержание.
-      {
-        duration: motion.holdToCompleteMs,
-        easing: Easing.linear,
-        reduceMotion: ReduceMotion.Never,
-      },
-      (finished) => {
-        if (finished) runOnJS(complete)();
-      },
-    );
-    // NOTE: Лёгкая вибрация каждые 200 мс — человек чувствует, что жест идёт.
     stopTicker();
     if (haptics.enabled) {
       ticker.current = setInterval(() => haptics.light(), motion.holdHapticIntervalMs);
     }
   };
-  const pressOut = () => {
+  const cancelFeedback = (started: boolean) => {
     stopTicker();
-    if (hold.value >= 1 || command.isPending) return;
-    cancelAnimation(hold);
-    if (hold.value > 0.02) setHint('short');
-    hold.value = withTiming(0, { duration: 260, easing: Easing.out(Easing.quad) });
+    if (started) setHint('short');
   };
+
+  const canHold = item?.status === 'pending' && !command.isPending;
+  const holdGesture = Gesture.LongPress()
+    .minDuration(motion.holdToCompleteMs)
+    .maxDistance(48)
+    .enabled(canHold)
+    .onBegin(() => {
+      // NOTE: Палец коснулся — кольцо начинает наполняться сразу, в UI-потоке.
+      cancelAnimation(hold);
+      hold.value = withTiming(
+        1,
+        // WARNING: 1,2 с — правило жеста, а не украшение. При «Уменьшении движения» Reanimated
+        // проигрывает анимацию мгновенно, и кольцо обгоняло бы сам жест.
+        {
+          duration: motion.holdToCompleteMs,
+          easing: Easing.linear,
+          reduceMotion: ReduceMotion.Never,
+        },
+      );
+      runOnJS(startFeedback)();
+    })
+    .onStart(() => {
+      // NOTE: Прошло 1,2 с, палец на месте — жест сработал: пружинный спалах и отметка.
+      flash.value = withSequence(
+        withTiming(motion.successScale.from, { duration: 110 }),
+        withSpring(motion.successScale.to, motion.spring),
+      );
+      runOnJS(complete)();
+    })
+    .onFinalize((_event, success) => {
+      if (success) return;
+      const started = hold.value > 0.02;
+      cancelAnimation(hold);
+      hold.value = withTiming(0, { duration: 260, easing: Easing.out(Easing.quad) });
+      runOnJS(cancelFeedback)(started);
+    });
 
   const ringProps = useAnimatedProps(() => ({
     strokeDashoffset: LENGTH * (1 - (base.value + (1 - base.value) * hold.value)),
@@ -151,7 +174,9 @@ export function HoldScreen() {
   const trackProps = useAnimatedProps(() => ({
     stroke: interpolateColor(night.value, [0, 1], ['#E4ECD9', '#2E4A3B']),
   }));
-  const pressStyle = useAnimatedStyle(() => ({ transform: [{ scale: 1 - hold.value * 0.04 }] }));
+  const pressStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: flash.value * (1 - hold.value * 0.04) }],
+  }));
   const shellStyle = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(
       night.value,
@@ -199,19 +224,21 @@ export function HoldScreen() {
       </View>
 
       <View style={styles.center}>
-        <Pressable
-          onPressIn={pressIn}
-          onPressOut={pressOut}
-          disabled={done || resting}
-          accessibilityRole="button"
-          accessibilityLabel={t('habits:hold')}
-          accessibilityHint={t('habits:hold_hint')}
-          // NOTE: Экранный диктор не может «удерживать» — двойное касание сразу отмечает привычку.
-          accessibilityActions={[{ name: 'activate' }]}
-          onAccessibilityAction={() => complete()}
-          testID="hold-target"
-        >
-          <Animated.View style={[styles.ring, pressStyle]}>
+        <GestureDetector gesture={holdGesture}>
+          <Animated.View
+            style={[styles.ring, pressStyle]}
+            accessible
+            accessibilityRole="button"
+            accessibilityLabel={t('habits:hold')}
+            accessibilityHint={t('habits:hold_hint')}
+            accessibilityState={{ disabled: done || resting }}
+            // NOTE: Экранный диктор не может «удерживать» — двойное касание сразу отмечает привычку.
+            accessibilityActions={[{ name: 'activate' }]}
+            onAccessibilityAction={() => {
+              if (canHold) complete();
+            }}
+            testID="hold-target"
+          >
             <Svg width={SIZE} height={SIZE} style={StyleSheet.absoluteFill}>
               <AnimatedCircle
                 cx={SIZE / 2}
@@ -256,7 +283,7 @@ export function HoldScreen() {
               {done ? '100%' : `${percent}%`}
             </AppText>
           </Animated.View>
-        </Pressable>
+        </GestureDetector>
 
         <ThemedText variant="title" style={styles.title} testID="hold-title">
           {done
